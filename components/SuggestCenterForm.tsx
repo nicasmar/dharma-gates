@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import type { Database } from '../lib/database.types';
-import { supabase, submitNewCenter } from '../lib/supabase';
+import { submitNewCenter } from '../lib/supabase';
 
-type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
 interface SuggestCenterFormProps {
-  showSuggestForm: boolean;
   setShowSuggestForm: (show: boolean) => void;
 }
 
@@ -37,7 +34,7 @@ interface FormData {
   longitude: number | null;
 }
 
-export default function SuggestCenterForm({ showSuggestForm, setShowSuggestForm }: SuggestCenterFormProps) {
+export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     center_type: '',
@@ -69,8 +66,7 @@ export default function SuggestCenterForm({ showSuggestForm, setShowSuggestForm 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
-  const [isGeocoding, setIsGeocoding] = useState(false);
-  const [geocodingError, setGeocodingError] = useState<string | null>(null);
+  const [, setGeocodingError] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -9,8 +10,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
 
+type CenterData = Database['public']['Tables']['monasteries']['Insert']
+
 export const getMonasteries = async () => {
-  let query = supabase
+  const query = supabase
     .from('monasteries')
     .select('*');
 
@@ -45,7 +48,7 @@ export const deleteMonastery = async (id: string) => {
   }
 }
 
-export const submitNewCenter = async (centerData: any) => {
+export const submitNewCenter = async (centerData: CenterData) => {
   const { error } = await supabase
     .from('monasteries')
     .insert([{ ...centerData, pending: true }]);
