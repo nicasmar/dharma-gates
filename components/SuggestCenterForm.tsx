@@ -3,6 +3,7 @@ import { submitNewCenter } from '../lib/supabase';
 
 
 interface SuggestCenterFormProps {
+  showSuggestForm: boolean;
   setShowSuggestForm: (show: boolean) => void;
 }
 
