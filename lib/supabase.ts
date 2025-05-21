@@ -10,12 +10,47 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
 
 export const getMonasteries = async () => {
-  const { data, error } = await supabase
-          .from('monasteries')
-          .select('*')
+  let query = supabase
+    .from('monasteries')
+    .select('*');
+
+  const { data, error } = await query;
+
   if (error) {
     throw error;
   }
 
   return data;
+}
+
+export const updateMonasteryPendingStatus = async (id: string, pending: boolean) => {
+  const { error } = await supabase
+    .from('monasteries')
+    .update({ pending })
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export const deleteMonastery = async (id: string) => {
+  const { error } = await supabase
+    .from('monasteries')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export const submitNewCenter = async (centerData: any) => {
+  const { error } = await supabase
+    .from('monasteries')
+    .insert([{ ...centerData, pending: true }]);
+
+  if (error) {
+    throw error;
+  }
 }

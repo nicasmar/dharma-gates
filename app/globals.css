@@ -1,23 +1,30 @@
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import 'leaflet/dist/leaflet.css';
-
 .leaflet-container {
   width: 100%;
   height: 100%;
+  z-index: 1;
+}
+
+.leaflet-control-container {
+  z-index: 2;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
   }
 }
 
@@ -28,8 +35,13 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,4 +62,26 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* Remove default focus styles */
+input:focus, select:focus, textarea:focus,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none !important;
+}
+
+/* Add custom focus styles */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 1px solid #286B88 !important;
+  outline-offset: 1px;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 1px solid #286B88 !important;
+  outline-offset: 1px;
+}
+
+/* Override browser's default focus color */
+:focus-visible {
+  outline-color: #286B88 !important;
 }
