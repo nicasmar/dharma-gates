@@ -9,11 +9,43 @@ import SuggestCenterForm from './SuggestCenterForm';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
+// Function to normalize text by removing accents and converting to lowercase
+const normalizeText = (text: string): string => {
+  return text
+    .normalize('NFD')  // Decompose characters with accents
+    .replace(/[\u0300-\u036f]/g, '')  // Remove accents
+    .toLowerCase()  // Convert to lowercase
+    .trim();  // Remove leading/trailing whitespace
+};
+
+// Function to group similar values
+const groupSimilarValues = (values: string[]): Map<string, string[]> => {
+  const groups = new Map<string, string[]>();
+  
+  values.forEach(value => {
+    if (!value) return;
+    const normalized = normalizeText(value);
+    const existing = groups.get(normalized);
+    if (existing) {
+      if (!existing.includes(value)) {
+        existing.push(value);
+      }
+    } else {
+      groups.set(normalized, [value]);
+    }
+  });
+  
+  return groups;
+};
+
 export default function DirectoryContainer() {
   const [activeTab, setActiveTab] = useState<'map' | 'table'>('table');
   const [showSuggestForm, setShowSuggestForm] = useState(false);
   const [availableVehicles, setAvailableVehicles] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [availableSettings, setAvailableSettings] = useState<string[]>([]);
+  const [availablePriceModels, setAvailablePriceModels] = useState<string[]>([]);
+  const [availableGenderPolicies, setAvailableGenderPolicies] = useState<string[]>([]);
   const [monasteries, setMonasteries] = useState<Monastery[]>([]);
   const [filteredMonasteries, setFilteredMonasteries] = useState<Monastery[]>([]);
   const [selectedMonastery, setSelectedMonastery] = useState<Monastery | null>(null);
@@ -30,16 +62,46 @@ export default function DirectoryContainer() {
           setMonasteries(data);
           setFilteredMonasteries(data);
           
-          // Extract unique vehicles and types for filters
-          const vehicles = Array.from(new Set(
+          // Group similar values for all filterable fields
+          const vehicleGroups = groupSimilarValues(
             data.map(m => m.vehicle).filter(Boolean) as string[]
-          )).sort();
+          );
+          const vehicles = Array.from(vehicleGroups.values())
+            .map(group => group[0])
+            .sort();
           setAvailableVehicles(vehicles);
 
-          const types = Array.from(new Set(
+          const typeGroups = groupSimilarValues(
             data.map(m => m.center_type).filter(Boolean) as string[]
-          )).sort();
+          );
+          const types = Array.from(typeGroups.values())
+            .map(group => group[0])
+            .sort();
           setAvailableTypes(types);
+
+          const settingGroups = groupSimilarValues(
+            data.map(m => m.setting).filter(Boolean) as string[]
+          );
+          const settings = Array.from(settingGroups.values())
+            .map(group => group[0])
+            .sort();
+          setAvailableSettings(settings);
+
+          const priceModelGroups = groupSimilarValues(
+            data.map(m => m.price_model).filter(Boolean) as string[]
+          );
+          const priceModels = Array.from(priceModelGroups.values())
+            .map(group => group[0])
+            .sort();
+          setAvailablePriceModels(priceModels);
+
+          const genderPolicyGroups = groupSimilarValues(
+            data.map(m => m.gender_policy).filter(Boolean) as string[]
+          );
+          const genderPolicies = Array.from(genderPolicyGroups.values())
+            .map(group => group[0])
+            .sort();
+          setAvailableGenderPolicies(genderPolicies);
         }
       } catch (err) {
         console.error('Error fetching monasteries:', err);
@@ -74,6 +136,9 @@ export default function DirectoryContainer() {
                   monasteries={monasteries}
                   availableVehicles={availableVehicles}
                   availableTypes={availableTypes}
+                  availableSettings={availableSettings}
+                  availablePriceModels={availablePriceModels}
+                  availableGenderPolicies={availableGenderPolicies}
                   onFilter={handleFilter}
                 />
               </div>

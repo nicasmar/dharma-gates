@@ -1,12 +1,25 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Database } from '../lib/database.types';
+import { Search, MapPin, Filter, X } from 'lucide-react';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
+
+// Function to normalize text by removing accents and converting to lowercase
+const normalizeText = (text: string): string => {
+  return text
+    .normalize('NFD')  // Decompose characters with accents
+    .replace(/[\u0300-\u036f]/g, '')  // Remove accents
+    .toLowerCase()  // Convert to lowercase
+    .trim();  // Remove leading/trailing whitespace
+};
 
 interface FilterPanelProps {
   monasteries: Monastery[];
   availableVehicles: string[];
   availableTypes: string[];
+  availableSettings: string[];
+  availablePriceModels: string[];
+  availableGenderPolicies: string[];
   onFilter: (filteredMonasteries: Monastery[]) => void;
 }
 
@@ -14,44 +27,75 @@ export default function FilterPanel({
   monasteries,
   availableVehicles, 
   availableTypes,
+  availableSettings,
+  availablePriceModels,
+  availableGenderPolicies,
   onFilter
 }: FilterPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [vehicleFilter, setVehicleFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [vehicleFilters, setVehicleFilters] = useState<string[]>([]);
+  const [typeFilters, setTypeFilters] = useState<string[]>([]);
   const [locationFilter, setLocationFilter] = useState('');
-  const [settingFilter, setSettingFilter] = useState<string>('');
-  const [priceModelFilter, setPriceModelFilter] = useState<string>('');
+  const [settingFilters, setSettingFilters] = useState<string[]>([]);
+  const [priceModelFilters, setPriceModelFilters] = useState<string[]>([]);
   const [beginnerFriendlyFilter, setBeginnerFriendlyFilter] = useState<boolean | null>(null);
-  const [genderPolicyFilter, setGenderPolicyFilter] = useState<string>('');
+  const [genderPolicyFilters, setGenderPolicyFilters] = useState<string[]>([]);
   const [ordinationPossibleFilter, setOrdinationPossibleFilter] = useState<boolean | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const filteredMonasteries = useMemo(() => {
     return monasteries.filter(monastery => {
       const matchesSearch = !searchTerm || 
         (monastery.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         monastery.address?.toLowerCase().includes(searchTerm.toLowerCase()));
+         monastery.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         monastery.teachers?.some(teacher => 
+           teacher.toLowerCase().includes(searchTerm.toLowerCase())
+         ));
       
-      const matchesVehicle = !vehicleFilter || 
-        monastery.vehicle === vehicleFilter;
+      const matchesVehicle = vehicleFilters.length === 0 || 
+        vehicleFilters.some(filter => 
+          normalizeText(monastery.vehicle || '') === normalizeText(filter)
+        );
       
-      const matchesType = !typeFilter || 
-        monastery.center_type === typeFilter;
+      const matchesType = typeFilters.length === 0 || 
+        typeFilters.some(filter => 
+          normalizeText(monastery.center_type || '') === normalizeText(filter)
+        );
 
       const matchesLocation = !locationFilter ||
         monastery.address?.toLowerCase().includes(locationFilter.toLowerCase());
 
-      const matchesSetting = !settingFilter ||
-        monastery.setting === settingFilter;
+      const matchesSetting = settingFilters.length === 0 ||
+        settingFilters.some(filter => 
+          normalizeText(monastery.setting || '') === normalizeText(filter)
+        );
 
-      const matchesPriceModel = !priceModelFilter ||
-        monastery.price_model === priceModelFilter;
+      const matchesPriceModel = priceModelFilters.length === 0 ||
+        priceModelFilters.some(filter => 
+          normalizeText(monastery.price_model || '') === normalizeText(filter)
+        );
 
       const matchesBeginnerFriendly = beginnerFriendlyFilter === null ||
         monastery.beginner_friendly === beginnerFriendlyFilter;
 
-      const matchesGenderPolicy = !genderPolicyFilter ||
-        monastery.gender_policy === genderPolicyFilter;
+      const matchesGenderPolicy = genderPolicyFilters.length === 0 ||
+        genderPolicyFilters.some(filter => 
+          normalizeText(monastery.gender_policy || '') === normalizeText(filter)
+        );
 
       const matchesOrdinationPossible = ordinationPossibleFilter === null ||
         monastery.ordination_possible === ordinationPossibleFilter;
@@ -61,8 +105,8 @@ export default function FilterPanel({
              matchesGenderPolicy && matchesOrdinationPossible;
     });
   }, [
-    monasteries, searchTerm, vehicleFilter, typeFilter, locationFilter,
-    settingFilter, priceModelFilter, beginnerFriendlyFilter, genderPolicyFilter,
+    monasteries, searchTerm, vehicleFilters, typeFilters, locationFilter,
+    settingFilters, priceModelFilters, beginnerFriendlyFilter, genderPolicyFilters,
     ordinationPossibleFilter
   ]);
 
@@ -72,20 +116,40 @@ export default function FilterPanel({
 
   const clearFilters = () => {
     setSearchTerm('');
-    setVehicleFilter('');
-    setTypeFilter('');
+    setVehicleFilters([]);
+    setTypeFilters([]);
     setLocationFilter('');
-    setSettingFilter('');
-    setPriceModelFilter('');
+    setSettingFilters([]);
+    setPriceModelFilters([]);
     setBeginnerFriendlyFilter(null);
-    setGenderPolicyFilter('');
+    setGenderPolicyFilters([]);
     setOrdinationPossibleFilter(null);
+  };
+
+  const handleMultiSelect = (
+    value: string,
+    currentFilters: string[],
+    setFilters: (filters: string[]) => void
+  ) => {
+    if (currentFilters.includes(value)) {
+      setFilters(currentFilters.filter(filter => filter !== value));
+    } else {
+      setFilters([...currentFilters, value]);
+    }
   };
 
   return (
     <div className="w-full h-full bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-      <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+        <button
+          onClick={clearFilters}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="space-y-4" ref={dropdownRef}>
         {/* Search */}
         <div className="space-y-1">
           <label htmlFor="search" className="block text-sm font-medium text-gray-700">
@@ -95,7 +159,7 @@ export default function FilterPanel({
             id="search"
             type="search"
             className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            placeholder="Search by name or address"
+            placeholder="Search by name, address, or teacher"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -118,76 +182,142 @@ export default function FilterPanel({
 
         {/* Setting */}
         <div className="space-y-1">
-          <label htmlFor="setting" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Setting
           </label>
-          <select
-            id="setting"
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            value={settingFilter}
-            onChange={(e) => setSettingFilter(e.target.value)}
-          >
-            <option value="">All Settings</option>
-            <option value="Urban">Urban</option>
-            <option value="Forest">Forest</option>
-            <option value="Mountain">Mountain</option>
-            <option value="Suburban">Suburban</option>
-            <option value="Desert">Desert</option>
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'setting' ? null : 'setting')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {settingFilters.length > 0 
+                ? settingFilters.join(', ')
+                : 'Select settings'}
+            </button>
+            {openDropdown === 'setting' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableSettings.map(setting => (
+                    <label key={setting} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={settingFilters.includes(setting)}
+                        onChange={() => handleMultiSelect(setting, settingFilters, setSettingFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{setting}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Vehicle */}
         <div className="space-y-1">
-          <label htmlFor="vehicle" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Buddhist Vehicle
           </label>
-          <select
-            id="vehicle"
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            value={vehicleFilter}
-            onChange={(e) => setVehicleFilter(e.target.value)}
-          >
-            <option value="">All Vehicles</option>
-            {availableVehicles.map(vehicle => (
-              <option key={vehicle} value={vehicle}>{vehicle}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'vehicle' ? null : 'vehicle')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {vehicleFilters.length > 0 
+                ? vehicleFilters.join(', ')
+                : 'Select vehicles'}
+            </button>
+            {openDropdown === 'vehicle' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableVehicles.map(vehicle => (
+                    <label key={vehicle} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={vehicleFilters.includes(vehicle)}
+                        onChange={() => handleMultiSelect(vehicle, vehicleFilters, setVehicleFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{vehicle}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Center Type */}
         <div className="space-y-1">
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Center Type
           </label>
-          <select
-            id="type"
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="">All Types</option>
-            {availableTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {typeFilters.length > 0 
+                ? typeFilters.join(', ')
+                : 'Select types'}
+            </button>
+            {openDropdown === 'type' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableTypes.map(type => (
+                    <label key={type} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={typeFilters.includes(type)}
+                        onChange={() => handleMultiSelect(type, typeFilters, setTypeFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Price Model */}
         <div className="space-y-1">
-          <label htmlFor="price-model" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Price Model
           </label>
-          <select
-            id="price-model"
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            value={priceModelFilter}
-            onChange={(e) => setPriceModelFilter(e.target.value)}
-          >
-            <option value="">All Price Models</option>
-            <option value="Donation-based">Donation-based</option>
-            <option value="Fixed Fee">Fixed Fee</option>
-            <option value="Flexible / Scholarships">Flexible / Scholarships</option>
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'price' ? null : 'price')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {priceModelFilters.length > 0 
+                ? priceModelFilters.join(', ')
+                : 'Select price models'}
+            </button>
+            {openDropdown === 'price' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availablePriceModels.map(model => (
+                    <label key={model} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={priceModelFilters.includes(model)}
+                        onChange={() => handleMultiSelect(model, priceModelFilters, setPriceModelFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{model}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Beginner Friendly */}
@@ -231,20 +361,37 @@ export default function FilterPanel({
 
         {/* Gender Policy */}
         <div className="space-y-1">
-          <label htmlFor="gender-policy" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Gender Policy
           </label>
-          <select
-            id="gender-policy"
-            className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            value={genderPolicyFilter}
-            onChange={(e) => setGenderPolicyFilter(e.target.value)}
-          >
-            <option value="">All Policies</option>
-            <option value="Mixed">Mixed</option>
-            <option value="Male-only">Male-only</option>
-            <option value="Female-only">Female-only</option>
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'gender' ? null : 'gender')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {genderPolicyFilters.length > 0 
+                ? genderPolicyFilters.join(', ')
+                : 'Select gender policies'}
+            </button>
+            {openDropdown === 'gender' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableGenderPolicies.map(policy => (
+                    <label key={policy} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={genderPolicyFilters.includes(policy)}
+                        onChange={() => handleMultiSelect(policy, genderPolicyFilters, setGenderPolicyFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{policy}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Ordination Possible */}
@@ -287,9 +434,9 @@ export default function FilterPanel({
         </div>
 
         {/* Clear Filters Button */}
-        {(searchTerm || vehicleFilter || typeFilter || locationFilter ||
-          settingFilter || priceModelFilter || beginnerFriendlyFilter !== null || 
-          genderPolicyFilter || ordinationPossibleFilter !== null) && (
+        {(searchTerm || vehicleFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
+          settingFilters.length > 0 || priceModelFilters.length > 0 || beginnerFriendlyFilter !== null || 
+          genderPolicyFilters.length > 0 || ordinationPossibleFilter !== null) && (
           <button
             onClick={clearFilters}
             className="w-full px-4 py-2 bg-[#286B88]/10 text-[#286B88] text-sm font-medium rounded-lg hover:bg-[#286B88]/20 transition-colors mt-4"
