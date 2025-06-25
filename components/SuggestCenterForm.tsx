@@ -5,6 +5,11 @@ import { submitNewCenter } from '../lib/supabase';
 interface SuggestCenterFormProps {
   showSuggestForm: boolean;
   setShowSuggestForm: (show: boolean) => void;
+  availableVehicles: string[];
+  availableTypes: string[];
+  availableSettings: string[];
+  availablePriceModels: string[];
+  availableGenderPolicies: string[];
 }
 
 interface FormData {
@@ -35,7 +40,14 @@ interface FormData {
   longitude: number | null;
 }
 
-export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterFormProps) {
+export default function SuggestCenterForm({ 
+  setShowSuggestForm, 
+  availableVehicles, 
+  availableTypes, 
+  availableSettings, 
+  availablePriceModels, 
+  availableGenderPolicies 
+}: SuggestCenterFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     center_type: '',
@@ -70,6 +82,18 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
   const [, setGeocodingError] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for custom input visibility and values
+  const [showCustomCenterType, setShowCustomCenterType] = useState(false);
+  const [showCustomVehicle, setShowCustomVehicle] = useState(false);
+  const [showCustomSetting, setShowCustomSetting] = useState(false);
+  const [showCustomPriceModel, setShowCustomPriceModel] = useState(false);
+  const [showCustomGenderPolicy, setShowCustomGenderPolicy] = useState(false);
+  const [customCenterType, setCustomCenterType] = useState('');
+  const [customVehicle, setCustomVehicle] = useState('');
+  const [customSetting, setCustomSetting] = useState('');
+  const [customPriceModel, setCustomPriceModel] = useState('');
+  const [customGenderPolicy, setCustomGenderPolicy] = useState('');
 
   const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -136,6 +160,95 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleSelectChange = (fieldName: string, value: string) => {
+    // Handle "Other" option selections
+    if (value === 'Other') {
+      switch (fieldName) {
+        case 'center_type':
+          setShowCustomCenterType(true);
+          setFormData(prev => ({ ...prev, center_type: '' }));
+          break;
+        case 'vehicle':
+          setShowCustomVehicle(true);
+          setFormData(prev => ({ ...prev, vehicle: '' }));
+          break;
+        case 'setting':
+          setShowCustomSetting(true);
+          setFormData(prev => ({ ...prev, setting: '' }));
+          break;
+        case 'price_model':
+          setShowCustomPriceModel(true);
+          setFormData(prev => ({ ...prev, price_model: '' }));
+          break;
+        case 'gender_policy':
+          setShowCustomGenderPolicy(true);
+          setFormData(prev => ({ ...prev, gender_policy: '' }));
+          break;
+      }
+    } else {
+      // Handle regular selections
+      setFormData(prev => ({ ...prev, [fieldName]: value || null }));
+      // Hide custom input if switching away from "Other"
+      switch (fieldName) {
+        case 'center_type':
+          setShowCustomCenterType(false);
+          setCustomCenterType('');
+          break;
+        case 'vehicle':
+          setShowCustomVehicle(false);
+          setCustomVehicle('');
+          break;
+        case 'setting':
+          setShowCustomSetting(false);
+          setCustomSetting('');
+          break;
+        case 'price_model':
+          setShowCustomPriceModel(false);
+          setCustomPriceModel('');
+          break;
+        case 'gender_policy':
+          setShowCustomGenderPolicy(false);
+          setCustomGenderPolicy('');
+          break;
+      }
+    }
+    
+    // Clear error when field is modified
+    if (errors[fieldName as keyof FormData]) {
+      setErrors(prev => ({ ...prev, [fieldName]: undefined }));
+    }
+  };
+
+  const handleCustomInputChange = (fieldName: string, value: string) => {
+    switch (fieldName) {
+      case 'center_type':
+        setCustomCenterType(value);
+        setFormData(prev => ({ ...prev, center_type: value }));
+        break;
+      case 'vehicle':
+        setCustomVehicle(value);
+        setFormData(prev => ({ ...prev, vehicle: value }));
+        break;
+      case 'setting':
+        setCustomSetting(value);
+        setFormData(prev => ({ ...prev, setting: value }));
+        break;
+      case 'price_model':
+        setCustomPriceModel(value);
+        setFormData(prev => ({ ...prev, price_model: value }));
+        break;
+      case 'gender_policy':
+        setCustomGenderPolicy(value);
+        setFormData(prev => ({ ...prev, gender_policy: value }));
+        break;
+    }
+    
+    // Clear error when field is modified
+    if (errors[fieldName as keyof FormData]) {
+      setErrors(prev => ({ ...prev, [fieldName]: undefined }));
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
@@ -143,6 +256,9 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else if (name === 'languages_spoken' || name === 'lineages' || name === 'practices' || name === 'teachers' || name === 'traditions') {
       setFormData(prev => ({ ...prev, [name]: value ? value.split(',').map(item => item.trim()) : null }));
+    } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy') {
+      handleSelectChange(name, value);
+      return;
     } else {
       setFormData(prev => ({ ...prev, [name]: value || null }));
     }
@@ -258,31 +374,50 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
               <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Center Type *</label>
               <select
                 name="center_type"
-                value={formData.center_type}
+                value={showCustomCenterType ? 'Other' : formData.center_type}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 text-sm border ${errors.center_type ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
               >
                 <option value="">Select a type</option>
-                <option value="Monastery">Monastery</option>
-                <option value="Retreat Center">Retreat Center</option>
-                <option value="Temple">Temple</option>
-                <option value="Meditation Center">Meditation Center</option>
+                {availableTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+                <option value="Other">Other (specify below)</option>
               </select>
+              {showCustomCenterType && (
+                <input
+                  type="text"
+                  value={customCenterType}
+                  onChange={(e) => handleCustomInputChange('center_type', e.target.value)}
+                  className={`w-full px-3 py-2 text-sm border ${errors.center_type ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2`}
+                  placeholder="Enter custom center type"
+                />
+              )}
               {errors.center_type && <p className="mt-1 text-xs text-rose-600">{errors.center_type}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Vehicle *</label>
               <select
                 name="vehicle"
-                value={formData.vehicle}
+                value={showCustomVehicle ? 'Other' : formData.vehicle}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 text-sm border ${errors.vehicle ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
               >
                 <option value="">Select a vehicle</option>
-                <option value="Theravada">Theravada</option>
-                <option value="Mahayana">Mahayana</option>
-                <option value="Vajrayana">Vajrayana</option>
+                {availableVehicles.map(vehicle => (
+                  <option key={vehicle} value={vehicle}>{vehicle}</option>
+                ))}
+                <option value="Other">Other (specify below)</option>
               </select>
+              {showCustomVehicle && (
+                <input
+                  type="text"
+                  value={customVehicle}
+                  onChange={(e) => handleCustomInputChange('vehicle', e.target.value)}
+                  className={`w-full px-3 py-2 text-sm border ${errors.vehicle ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2`}
+                  placeholder="Enter custom vehicle"
+                />
+              )}
               {errors.vehicle && <p className="mt-1 text-xs text-rose-600">{errors.vehicle}</p>}
             </div>
             <div>
@@ -410,25 +545,51 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Setting</label>
-                <input
-                  type="text"
+                <select
                   name="setting"
-                  value={formData.setting || ''}
+                  value={showCustomSetting ? 'Other' : (formData.setting || '')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                  placeholder="e.g., Mountain retreat"
-                />
+                >
+                  <option value="">Select a setting</option>
+                  {availableSettings.map(setting => (
+                    <option key={setting} value={setting}>{setting}</option>
+                  ))}
+                  <option value="Other">Other (specify below)</option>
+                </select>
+                {showCustomSetting && (
+                  <input
+                    type="text"
+                    value={customSetting}
+                    onChange={(e) => handleCustomInputChange('setting', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2"
+                    placeholder="Enter custom setting"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Price Model</label>
-                <input
-                  type="text"
+                <select
                   name="price_model"
-                  value={formData.price_model || ''}
+                  value={showCustomPriceModel ? 'Other' : (formData.price_model || '')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                  placeholder="e.g., Donation-based"
-                />
+                >
+                  <option value="">Select a price model</option>
+                  {availablePriceModels.map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                  <option value="Other">Other (specify below)</option>
+                </select>
+                {showCustomPriceModel && (
+                  <input
+                    type="text"
+                    value={customPriceModel}
+                    onChange={(e) => handleCustomInputChange('price_model', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2"
+                    placeholder="Enter custom price model"
+                  />
+                )}
               </div>
             </div>
 
@@ -493,14 +654,27 @@ export default function SuggestCenterForm({ setShowSuggestForm }: SuggestCenterF
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Gender Policy</label>
-                <input
-                  type="text"
+                <select
                   name="gender_policy"
-                  value={formData.gender_policy || ''}
+                  value={showCustomGenderPolicy ? 'Other' : (formData.gender_policy || '')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                  placeholder="e.g., Mixed gender"
-                />
+                >
+                  <option value="">Select a gender policy</option>
+                  {availableGenderPolicies.map(policy => (
+                    <option key={policy} value={policy}>{policy}</option>
+                  ))}
+                  <option value="Other">Other (specify below)</option>
+                </select>
+                {showCustomGenderPolicy && (
+                  <input
+                    type="text"
+                    value={customGenderPolicy}
+                    onChange={(e) => handleCustomInputChange('gender_policy', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2"
+                    placeholder="Enter custom gender policy"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Involvement Method</label>

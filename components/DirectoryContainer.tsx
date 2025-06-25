@@ -128,7 +128,15 @@ export default function DirectoryContainer() {
       <div className="flex-1">
         <div className="w-full border border-gray-200 rounded-xl p-6 bg-white shadow-lg">
           {showSuggestForm ? (
-            <SuggestCenterForm showSuggestForm={showSuggestForm} setShowSuggestForm={setShowSuggestForm} />
+            <SuggestCenterForm 
+              showSuggestForm={showSuggestForm} 
+              setShowSuggestForm={setShowSuggestForm}
+              availableVehicles={availableVehicles}
+              availableTypes={availableTypes}
+              availableSettings={availableSettings}
+              availablePriceModels={availablePriceModels}
+              availableGenderPolicies={availableGenderPolicies}
+            />
           ) : (
             <div className="flex gap-8">
               <div className="w-1/4" id="filter-panel">
