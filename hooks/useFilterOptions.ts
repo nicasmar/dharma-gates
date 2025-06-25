@@ -39,6 +39,7 @@ export interface FilterOptions {
   availablePriceModels: string[];
   availableGenderPolicies: string[];
   availableTraditions: string[];
+  availableDiets: string[];
 }
 
 export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
@@ -48,6 +49,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
   const [availablePriceModels, setAvailablePriceModels] = useState<string[]>([]);
   const [availableGenderPolicies, setAvailableGenderPolicies] = useState<string[]>([]);
   const [availableTraditions, setAvailableTraditions] = useState<string[]>([]);
+  const [availableDiets, setAvailableDiets] = useState<string[]>([]);
 
   useEffect(() => {
     if (!monasteries.length) return;
@@ -58,7 +60,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     );
     const vehicles = Array.from(vehicleGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailableVehicles(vehicles);
 
     const typeGroups = groupSimilarValues(
@@ -66,7 +68,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     );
     const types = Array.from(typeGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailableTypes(types);
 
     const settingGroups = groupSimilarValues(
@@ -74,7 +76,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     );
     const settings = Array.from(settingGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailableSettings(settings);
 
     const priceModelGroups = groupSimilarValues(
@@ -82,7 +84,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     );
     const priceModels = Array.from(priceModelGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailablePriceModels(priceModels);
 
     const genderPolicyGroups = groupSimilarValues(
@@ -90,7 +92,7 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     );
     const genderPolicies = Array.from(genderPolicyGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailableGenderPolicies(genderPolicies);
 
     // Collect and normalize traditions from all monasteries
@@ -98,8 +100,16 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     const traditionGroups = groupSimilarValues(allTraditions);
     const traditions = Array.from(traditionGroups.values())
       .map(group => group[0])
-      .sort();
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     setAvailableTraditions(traditions);
+
+    const dietGroups = groupSimilarValues(
+      monasteries.map(m => m.dietary_info).filter(Boolean) as string[]
+    );
+    const diets = Array.from(dietGroups.values())
+      .map(group => group[0])
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    setAvailableDiets(diets);
   }, [monasteries]);
 
   return {
@@ -109,5 +119,6 @@ export function useFilterOptions(monasteries: Monastery[]): FilterOptions {
     availablePriceModels,
     availableGenderPolicies,
     availableTraditions,
+    availableDiets,
   };
 } 

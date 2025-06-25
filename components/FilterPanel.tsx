@@ -21,6 +21,7 @@ interface FilterPanelProps {
   availablePriceModels: string[];
   availableGenderPolicies: string[];
   availableTraditions: string[];
+  availableDiets: string[];
   onFilter: (filteredMonasteries: Monastery[]) => void;
 }
 
@@ -32,6 +33,7 @@ export default function FilterPanel({
   availablePriceModels,
   availableGenderPolicies,
   availableTraditions,
+  availableDiets,
   onFilter
 }: FilterPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +43,7 @@ export default function FilterPanel({
   const [locationFilter, setLocationFilter] = useState('');
   const [settingFilters, setSettingFilters] = useState<string[]>([]);
   const [priceModelFilters, setPriceModelFilters] = useState<string[]>([]);
+  const [dietFilters, setDietFilters] = useState<string[]>([]);
   const [beginnerFriendlyFilter, setBeginnerFriendlyFilter] = useState<boolean | null>(null);
   const [genderPolicyFilters, setGenderPolicyFilters] = useState<string[]>([]);
   const [ordinationPossibleFilter, setOrdinationPossibleFilter] = useState<boolean | null>(null);
@@ -99,6 +102,11 @@ export default function FilterPanel({
           normalizeText(monastery.price_model || '') === normalizeText(filter)
         );
 
+      const matchesDiet = dietFilters.length === 0 ||
+        dietFilters.some(filter => 
+          normalizeText(monastery.dietary_info || '') === normalizeText(filter)
+        );
+
       const matchesBeginnerFriendly = beginnerFriendlyFilter === null ||
         monastery.beginner_friendly === beginnerFriendlyFilter;
 
@@ -111,12 +119,12 @@ export default function FilterPanel({
         monastery.ordination_possible === ordinationPossibleFilter;
 
       return matchesSearch && matchesVehicle && matchesTradition && matchesType && matchesLocation &&
-             matchesSetting && matchesPriceModel && matchesBeginnerFriendly &&
+             matchesSetting && matchesPriceModel && matchesDiet && matchesBeginnerFriendly &&
              matchesGenderPolicy && matchesOrdinationPossible;
     });
   }, [
     monasteries, searchTerm, vehicleFilters, traditionFilters, typeFilters, locationFilter,
-    settingFilters, priceModelFilters, beginnerFriendlyFilter, genderPolicyFilters,
+    settingFilters, priceModelFilters, dietFilters, beginnerFriendlyFilter, genderPolicyFilters,
     ordinationPossibleFilter
   ]);
 
@@ -132,6 +140,7 @@ export default function FilterPanel({
     setLocationFilter('');
     setSettingFilters([]);
     setPriceModelFilters([]);
+    setDietFilters([]);
     setBeginnerFriendlyFilter(null);
     setGenderPolicyFilters([]);
     setOrdinationPossibleFilter(null);
@@ -325,6 +334,41 @@ export default function FilterPanel({
           </div>
         </div>
 
+        {/* Diet */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Diet
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'diet' ? null : 'diet')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {dietFilters.length > 0 
+                ? dietFilters.join(', ')
+                : 'Select diets'}
+            </button>
+            {openDropdown === 'diet' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableDiets.map(diet => (
+                    <label key={diet} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={dietFilters.includes(diet)}
+                        onChange={() => handleMultiSelect(diet, dietFilters, setDietFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{diet}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Price Model */}
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">
@@ -373,7 +417,7 @@ export default function FilterPanel({
             >
               {genderPolicyFilters.length > 0 
                 ? genderPolicyFilters.join(', ')
-                : 'Select gender distributions'}
+                : 'Select gender distribution'}
             </button>
             {openDropdown === 'gender' && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
@@ -478,7 +522,7 @@ export default function FilterPanel({
           <button
             onClick={clearFilters}
             disabled={!(searchTerm || vehicleFilters.length > 0 || traditionFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
-              settingFilters.length > 0 || priceModelFilters.length > 0 || beginnerFriendlyFilter !== null || 
+              settingFilters.length > 0 || priceModelFilters.length > 0 || dietFilters.length > 0 || beginnerFriendlyFilter !== null || 
               genderPolicyFilters.length > 0 || ordinationPossibleFilter !== null)}
             className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
           >

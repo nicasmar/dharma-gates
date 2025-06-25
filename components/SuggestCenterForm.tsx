@@ -11,6 +11,7 @@ interface SuggestCenterFormProps {
   availablePriceModels: string[];
   availableGenderPolicies: string[];
   availableTraditions: string[];
+  availableDiets: string[];
 }
 
 interface FormData {
@@ -47,7 +48,8 @@ export default function SuggestCenterForm({
   availableSettings, 
   availablePriceModels, 
   availableGenderPolicies,
-  availableTraditions 
+  availableTraditions,
+  availableDiets
 }: SuggestCenterFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -92,12 +94,14 @@ export default function SuggestCenterForm({
   const [showCustomPriceModel, setShowCustomPriceModel] = useState(false);
   const [showCustomGenderPolicy, setShowCustomGenderPolicy] = useState(false);
   const [showCustomTradition, setShowCustomTradition] = useState(false);
+  const [showCustomDiet, setShowCustomDiet] = useState(false);
   const [customCenterType, setCustomCenterType] = useState('');
   const [customVehicle, setCustomVehicle] = useState('');
   const [customSetting, setCustomSetting] = useState('');
   const [customPriceModel, setCustomPriceModel] = useState('');
   const [customGenderPolicy, setCustomGenderPolicy] = useState('');
   const [customTradition, setCustomTradition] = useState('');
+  const [customDiet, setCustomDiet] = useState('');
 
   const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
