@@ -153,7 +153,7 @@ export default function FilterPanel({
             id="search"
             type="search"
             className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            placeholder="Search by name, address, or teacher"
+            placeholder="Name, address, or teacher..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -168,7 +168,7 @@ export default function FilterPanel({
             id="location"
             type="text"
             className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            placeholder="Search by location (eg 'New York', 'Thailand','Philbrick Hill Road', etc.)"
+            placeholder="E.g. 'New York', 'Thailand', 'Philbrick Hill Road', etc.)"
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
           />
