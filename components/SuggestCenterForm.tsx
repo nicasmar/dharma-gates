@@ -409,16 +409,17 @@ export default function SuggestCenterForm({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-[#286B88]">Suggest a Center</h2>
-        <button
-          onClick={() => setShowSuggestForm(false)}
-          className="px-4 py-2 text-sm bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90"
-        >
-          Return to Directory
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-[#286B88]">Suggest a Center</h2>
+          <button
+            onClick={() => setShowSuggestForm(false)}
+            className="px-6 py-3 text-base bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90"
+          >
+            Return to Directory
+          </button>
+        </div>
 
       {submitError && (
         <div className="mb-4 p-4 bg-rose-50 text-rose-700 rounded-lg">
@@ -426,19 +427,19 @@ export default function SuggestCenterForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-10">
         {/* Essential Information */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-[#286B88]">Essential Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Center Name *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 text-sm border ${errors.name ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
+        <div className="space-y-8">
+          <h3 className="text-xl font-semibold text-[#286B88]">Essential Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <label className="block text-base font-medium text-[#286B88]/80 mb-2">Center Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 text-base border ${errors.name ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
                 placeholder="Enter center name"
               />
               {errors.name && <p className="mt-1 text-xs text-rose-600">{errors.name}</p>}
@@ -546,16 +547,16 @@ export default function SuggestCenterForm({
               onChange={handleChange}
               rows={3}
               className={`w-full px-3 py-2 text-sm border ${errors.description ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
-              placeholder="Enter center description"
+              placeholder="Tell everyone about the Dharma Center (e.g. 'This is a Zen Center for long-term practice based in the tradition of...')"
             />
             {errors.description && <p className="mt-1 text-xs text-rose-600">{errors.description}</p>}
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-[#286B88]">Contact Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-8">
+          <h3 className="text-xl font-semibold text-[#286B88]">Contact Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Website</label>
               <input
@@ -593,11 +594,11 @@ export default function SuggestCenterForm({
         </div>
 
         {/* Advanced Fields Toggle */}
-        <div className="flex justify-center">
+        <div className="flex justify-center py-4">
           <button
             type="button"
             onClick={() => setShowAdvancedFields(!showAdvancedFields)}
-            className="text-sm text-[#286B88] hover:text-[#286B88]/80 font-medium flex items-center gap-2"
+            className="text-base text-[#286B88] hover:text-[#286B88]/80 font-medium flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-[#286B88]/5"
           >
             {showAdvancedFields ? (
               <>
@@ -619,9 +620,9 @@ export default function SuggestCenterForm({
 
         {/* Advanced Fields */}
         {showAdvancedFields && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-[#286B88]">Additional Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-8">
+            <h3 className="text-xl font-semibold text-[#286B88]">Additional Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Community Size</label>
                 <input
@@ -752,7 +753,7 @@ export default function SuggestCenterForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Gender Policy</label>
                 <select
@@ -804,11 +805,11 @@ export default function SuggestCenterForm({
         )}
 
         {/* Submit Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-8 border-t border-gray-200">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-3 text-sm bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90 focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:ring-offset-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="px-8 py-4 text-base bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90 focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:ring-offset-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {isSubmitting ? (
               <>
@@ -824,6 +825,7 @@ export default function SuggestCenterForm({
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 } 
