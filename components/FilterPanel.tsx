@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Database } from '../lib/database.types';
-import { Search, MapPin, Filter, X } from 'lucide-react';
+
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
@@ -142,12 +142,6 @@ export default function FilterPanel({
     <div className="w-full h-full bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-        <button
-          onClick={clearFilters}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-5 w-5" />
-        </button>
       </div>
       <div className="space-y-4" ref={dropdownRef}>
         {/* Search */}
@@ -174,7 +168,7 @@ export default function FilterPanel({
             id="location"
             type="text"
             className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            placeholder="Search by location"
+            placeholder="Search by location (eg 'New York', 'Thailand','Philbrick Hill Road', etc.)"
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
           />
@@ -434,16 +428,17 @@ export default function FilterPanel({
         </div>
 
         {/* Clear Filters Button */}
-        {(searchTerm || vehicleFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
-          settingFilters.length > 0 || priceModelFilters.length > 0 || beginnerFriendlyFilter !== null || 
-          genderPolicyFilters.length > 0 || ordinationPossibleFilter !== null) && (
+        <div className="pt-4 border-t border-gray-200 mt-6">
           <button
             onClick={clearFilters}
-            className="w-full px-4 py-2 bg-[#286B88]/10 text-[#286B88] text-sm font-medium rounded-lg hover:bg-[#286B88]/20 transition-colors mt-4"
+            disabled={!(searchTerm || vehicleFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
+              settingFilters.length > 0 || priceModelFilters.length > 0 || beginnerFriendlyFilter !== null || 
+              genderPolicyFilters.length > 0 || ordinationPossibleFilter !== null)}
+            className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
           >
             Clear All Filters
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
