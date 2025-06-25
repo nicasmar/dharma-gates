@@ -19,27 +19,25 @@ const icon = L.icon({
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 type MonasteryWithCoordinates = Monastery & { latitude: number; longitude: number };
 
+// Helper function to truncate description for popup display
+const truncateDescription = (description: string | null, maxLength: number = 100): string | null => {
+  if (!description) return null;
+  if (description.length <= maxLength) return description;
+  return description.substring(0, maxLength).trim() + '...';
+};
+
 interface MonasteryMapProps {
   monasteries: Monastery[];
   selectedMonastery: Monastery | null;
+  onSelectMonastery?: (monastery: Monastery) => void;
   onEditMonastery?: (monastery: Monastery) => void;
   onDeleteMonastery?: (monastery: Monastery) => void;
   admin?: boolean;
 }
 
-function MapController({ selectedMonastery }: { selectedMonastery: Monastery | null }) {
-  const map = useMap();
 
-  useEffect(() => {
-    if (selectedMonastery && selectedMonastery.latitude && selectedMonastery.longitude) {
-      map.setView([selectedMonastery.latitude, selectedMonastery.longitude], 8);
-    }
-  }, [selectedMonastery, map]);
 
-  return null;
-}
-
-export default function MonasteryMap({ monasteries, selectedMonastery, onEditMonastery, onDeleteMonastery, admin }: MonasteryMapProps) {
+export default function MonasteryMap({ monasteries, selectedMonastery, onSelectMonastery, onEditMonastery, onDeleteMonastery, admin }: MonasteryMapProps) {
   const validMonasteries = monasteries.filter(
           (m): m is MonasteryWithCoordinates => 
             m.latitude !== null && m.longitude !== null
@@ -55,7 +53,6 @@ export default function MonasteryMap({ monasteries, selectedMonastery, onEditMon
           maxBounds={[[-90, -180], [90, 180]]}
           maxBoundsViscosity={1.0}
         >
-        <MapController selectedMonastery={selectedMonastery} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -67,12 +64,15 @@ export default function MonasteryMap({ monasteries, selectedMonastery, onEditMon
               key={monastery.id}
             position={[monastery.latitude, monastery.longitude]}
               icon={icon}
+              eventHandlers={onSelectMonastery ? {
+                click: () => onSelectMonastery(monastery)
+              } : undefined}
             >
               <Popup>
                 <div className="p-2">
                   <h3 className="font-bold text-lg">{monastery.name}</h3>
                   {monastery.description && (
-                  <p className="text-gray-600">{monastery.description}</p>
+                  <p className="text-gray-600">{truncateDescription(monastery.description)}</p>
                   )}
                   <div className="mt-2 flex flex-col gap-1">
                   {admin && onEditMonastery && onDeleteMonastery ? (

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import MonasteryTable from "./MonasteryTable";
+import MonasteryCard from "./MonasteryCard";
 import MapWrapper from './MapWrapper';
 import FilterPanel from "./FilterPanel";
 import { getMonasteries } from '../lib/supabase';
@@ -123,6 +124,10 @@ export default function DirectoryContainer() {
     setActiveTab('map');
   }, []);
 
+  const handleSelectMonastery = useCallback((monastery: Monastery) => {
+    setSelectedMonastery(monastery);
+  }, []);
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="flex-1">
@@ -179,37 +184,65 @@ export default function DirectoryContainer() {
                   </div>
                 </div>
 
-                <div className="h-[600px] rounded-lg overflow-hidden">
-                  {loading ? (
+                {loading ? (
+                  <div className="h-[600px] rounded-lg overflow-hidden">
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center">
                         <div className="w-16 h-16 border-4 border-t-[#286B88] border-[#286B88]/20 rounded-full animate-spin mx-auto"></div>
                         <p className="mt-4 text-gray-600">Loading monasteries...</p>
                       </div>
                     </div>
-                  ) : error ? (
+                  </div>
+                ) : error ? (
+                  <div className="h-[600px] rounded-lg overflow-hidden">
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-rose-700 text-lg font-medium mb-4">Error loading monasteries</p>
                         <p className="text-rose-600">{error}</p>
                       </div>
                     </div>
-                  ) : activeTab === 'map' ? (
-                    <div className="w-full h-full">
+                  </div>
+                ) : activeTab === 'map' ? (
+                  <div className="space-y-6">
+                    {/* Map Section */}
+                    <div className="h-[600px] rounded-lg overflow-hidden">
                       <MapWrapper
                         selectedMonastery={selectedMonastery}
                         monasteries={filteredMonasteries}
+                        onSelectMonastery={handleSelectMonastery}
                       />
                     </div>
-                  ) : (
+                    
+                    {/* Selected Monastery Card */}
+                    {selectedMonastery && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-[#286B88]">Selected Center</h3>
+                          <button
+                            onClick={() => setSelectedMonastery(null)}
+                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                          >
+                            <span>✕</span> Clear Selection
+                          </button>
+                        </div>
+                        <MonasteryCard
+                          monastery={selectedMonastery}
+                          onViewOnMap={handleViewOnMap}
+                          admin={false}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-[600px] rounded-lg overflow-hidden">
                     <div className="w-full h-full overflow-auto pr-2">
                       <MonasteryTable 
                         monasteries={filteredMonasteries} 
                         onViewOnMap={handleViewOnMap}
                       />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />
               </div>
             </div>
