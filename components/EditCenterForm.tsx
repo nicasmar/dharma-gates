@@ -31,7 +31,6 @@ interface FormData {
   involvement_method: string | null;
   languages_spoken: string[] | null;
   length_of_stay: string | null;
-  lineages: string[] | null;
   practices: string[] | null;
   price_details: string | null;
   price_model: string | null;
@@ -69,7 +68,6 @@ export default function EditCenterForm({
     involvement_method: monastery.involvement_method,
     languages_spoken: monastery.languages_spoken,
     length_of_stay: monastery.length_of_stay,
-    lineages: monastery.lineages,
     practices: monastery.practices,
     price_details: monastery.price_details,
     price_model: monastery.price_model,
@@ -90,7 +88,7 @@ export default function EditCenterForm({
     
     if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else if (name === 'languages_spoken' || name === 'lineages' || name === 'practices' || name === 'teachers' || name === 'traditions') {
+    } else if (name === 'languages_spoken' || name === 'practices' || name === 'teachers' || name === 'traditions') {
       setFormData(prev => ({ ...prev, [name]: value ? value.split(',').map(item => item.trim()) : null }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value || null }));
@@ -344,17 +342,7 @@ export default function EditCenterForm({
                     placeholder="English, Spanish, French"
                   />
                 </div>
-                <div>
-                  <label className="block text-base font-medium text-[#286B88]/80 mb-2">Lineages</label>
-                  <input
-                    type="text"
-                    name="lineages"
-                    value={formData.lineages?.join(', ') || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 text-base border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                    placeholder="Zen, Theravada, Tibetan"
-                  />
-                </div>
+
                 <div>
                   <label className="block text-base font-medium text-[#286B88]/80 mb-2">Practices</label>
                   <input

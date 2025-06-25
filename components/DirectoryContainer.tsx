@@ -7,51 +7,23 @@ import { getMonasteries } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 import ButtonsContainer from './ButtonsContainer';
 import SuggestCenterForm from './SuggestCenterForm';
+import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
-// Function to normalize text by removing accents and converting to lowercase
-const normalizeText = (text: string): string => {
-  return text
-    .normalize('NFD')  // Decompose characters with accents
-    .replace(/[\u0300-\u036f]/g, '')  // Remove accents
-    .toLowerCase()  // Convert to lowercase
-    .trim();  // Remove leading/trailing whitespace
-};
 
-// Function to group similar values
-const groupSimilarValues = (values: string[]): Map<string, string[]> => {
-  const groups = new Map<string, string[]>();
-  
-  values.forEach(value => {
-    if (!value) return;
-    const normalized = normalizeText(value);
-    const existing = groups.get(normalized);
-    if (existing) {
-      if (!existing.includes(value)) {
-        existing.push(value);
-      }
-    } else {
-      groups.set(normalized, [value]);
-    }
-  });
-  
-  return groups;
-};
 
 export default function DirectoryContainer() {
   const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
   const [showSuggestForm, setShowSuggestForm] = useState(false);
-  const [availableVehicles, setAvailableVehicles] = useState<string[]>([]);
-  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
-  const [availableSettings, setAvailableSettings] = useState<string[]>([]);
-  const [availablePriceModels, setAvailablePriceModels] = useState<string[]>([]);
-  const [availableGenderPolicies, setAvailableGenderPolicies] = useState<string[]>([]);
   const [monasteries, setMonasteries] = useState<Monastery[]>([]);
   const [filteredMonasteries, setFilteredMonasteries] = useState<Monastery[]>([]);
   const [selectedMonastery, setSelectedMonastery] = useState<Monastery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use the custom hook for filter options
+  const filterOptions = useFilterOptions(monasteries);
 
   useEffect(() => {
     async function fetchData() {
@@ -62,47 +34,6 @@ export default function DirectoryContainer() {
         if (data) {
           setMonasteries(data);
           setFilteredMonasteries(data);
-          
-          // Group similar values for all filterable fields
-          const vehicleGroups = groupSimilarValues(
-            data.map(m => m.vehicle).filter(Boolean) as string[]
-          );
-          const vehicles = Array.from(vehicleGroups.values())
-            .map(group => group[0])
-            .sort();
-          setAvailableVehicles(vehicles);
-
-          const typeGroups = groupSimilarValues(
-            data.map(m => m.center_type).filter(Boolean) as string[]
-          );
-          const types = Array.from(typeGroups.values())
-            .map(group => group[0])
-            .sort();
-          setAvailableTypes(types);
-
-          const settingGroups = groupSimilarValues(
-            data.map(m => m.setting).filter(Boolean) as string[]
-          );
-          const settings = Array.from(settingGroups.values())
-            .map(group => group[0])
-            .sort();
-          setAvailableSettings(settings);
-
-          const priceModelGroups = groupSimilarValues(
-            data.map(m => m.price_model).filter(Boolean) as string[]
-          );
-          const priceModels = Array.from(priceModelGroups.values())
-            .map(group => group[0])
-            .sort();
-          setAvailablePriceModels(priceModels);
-
-          const genderPolicyGroups = groupSimilarValues(
-            data.map(m => m.gender_policy).filter(Boolean) as string[]
-          );
-          const genderPolicies = Array.from(genderPolicyGroups.values())
-            .map(group => group[0])
-            .sort();
-          setAvailableGenderPolicies(genderPolicies);
         }
       } catch (err) {
         console.error('Error fetching monasteries:', err);
@@ -136,22 +67,19 @@ export default function DirectoryContainer() {
             <SuggestCenterForm 
               showSuggestForm={showSuggestForm} 
               setShowSuggestForm={setShowSuggestForm}
-              availableVehicles={availableVehicles}
-              availableTypes={availableTypes}
-              availableSettings={availableSettings}
-              availablePriceModels={availablePriceModels}
-              availableGenderPolicies={availableGenderPolicies}
+              availableVehicles={filterOptions.availableVehicles}
+              availableTypes={filterOptions.availableTypes}
+              availableSettings={filterOptions.availableSettings}
+              availablePriceModels={filterOptions.availablePriceModels}
+              availableGenderPolicies={filterOptions.availableGenderPolicies}
+              availableTraditions={filterOptions.availableTraditions}
             />
           ) : (
             <div className="flex gap-8">
               <div className="w-1/4" id="filter-panel">
                 <FilterPanel
                   monasteries={monasteries}
-                  availableVehicles={availableVehicles}
-                  availableTypes={availableTypes}
-                  availableSettings={availableSettings}
-                  availablePriceModels={availablePriceModels}
-                  availableGenderPolicies={availableGenderPolicies}
+                  {...filterOptions}
                   onFilter={handleFilter}
                 />
               </div>
@@ -203,52 +131,27 @@ export default function DirectoryContainer() {
                     </div>
                   </div>
                 ) : activeTab === 'map' ? (
-                  <div className="space-y-6">
-                    {/* Map Section */}
-                    <div className="h-[600px] rounded-lg overflow-hidden">
-                      <MapWrapper
-                        selectedMonastery={selectedMonastery}
-                        monasteries={filteredMonasteries}
-                        onSelectMonastery={handleSelectMonastery}
-                      />
-                    </div>
-                    
-                    {/* Selected Monastery Card */}
-                    {selectedMonastery && (
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-[#286B88]">Selected Center</h3>
-                          <button
-                            onClick={() => setSelectedMonastery(null)}
-                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                          >
-                            <span>✕</span> Clear Selection
-                          </button>
-                        </div>
-                        <MonasteryCard
-                          monastery={selectedMonastery}
-                          onViewOnMap={handleViewOnMap}
-                          admin={false}
-                        />
-                      </div>
-                    )}
+                  <div className="h-[600px] rounded-lg overflow-hidden">
+                    <MapWrapper 
+                      selectedMonastery={selectedMonastery}
+                      monasteries={filteredMonasteries}
+                      onSelectMonastery={handleSelectMonastery}
+                    />
                   </div>
                 ) : (
-                  <div className="h-[600px] rounded-lg overflow-hidden">
-                    <div className="w-full h-full overflow-auto pr-2">
-                      <MonasteryTable 
-                        monasteries={filteredMonasteries} 
-                        onViewOnMap={handleViewOnMap}
-                      />
-                    </div>
+                  <div className="h-[600px] rounded-lg overflow-y-auto">
+                    <MonasteryTable 
+                      monasteries={filteredMonasteries} 
+                      onViewOnMap={handleViewOnMap}
+                    />
                   </div>
                 )}
-                <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />
               </div>
             </div>
           )}
         </div>
       </div>
+      <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />
     </div>
   );
 } 

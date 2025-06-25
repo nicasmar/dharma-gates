@@ -8,38 +8,12 @@ import EditCenterForm from './EditCenterForm';
 import MonasteryTable from "./MonasteryTable";
 import MapWrapper from './MapWrapper';
 import FilterPanel from "./FilterPanel";
+import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 type MonasteryWithTimestamp = Monastery & { lastUpdated?: number };
 
-// Function to normalize text by removing accents and converting to lowercase
-const normalizeText = (text: string): string => {
-  return text
-    .normalize('NFD')  // Decompose characters with accents
-    .replace(/[\u0300-\u036f]/g, '')  // Remove accents
-    .toLowerCase()  // Convert to lowercase
-    .trim();  // Remove leading/trailing whitespace
-};
 
-// Function to group similar values
-const groupSimilarValues = (values: string[]): Map<string, string[]> => {
-  const groups = new Map<string, string[]>();
-  
-  values.forEach(value => {
-    if (!value) return;
-    const normalized = normalizeText(value);
-    const existing = groups.get(normalized);
-    if (existing) {
-      if (!existing.includes(value)) {
-        existing.push(value);
-      }
-    } else {
-      groups.set(normalized, [value]);
-    }
-  });
-  
-  return groups;
-};
 
 export default function AdminPanel() {
   const [monasteries, setMonasteries] = useState<MonasteryWithTimestamp[]>([]);
@@ -52,11 +26,9 @@ export default function AdminPanel() {
   const [deleteConfirmMonastery, setDeleteConfirmMonastery] = useState<Monastery | null>(null);
   const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
   const [selectedMonastery, setSelectedMonastery] = useState<Monastery | null>(null);
-  const [availableVehicles, setAvailableVehicles] = useState<string[]>([]);
-  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
-  const [availableSettings, setAvailableSettings] = useState<string[]>([]);
-  const [availablePriceModels, setAvailablePriceModels] = useState<string[]>([]);
-  const [availableGenderPolicies, setAvailableGenderPolicies] = useState<string[]>([]);
+
+  // Use the custom hook for filter options
+  const filterOptions = useFilterOptions(approvedMonasteries);
 
   useEffect(() => {
     async function fetchData() {
@@ -71,47 +43,6 @@ export default function AdminPanel() {
         setMonasteries(pendingData);
         setApprovedMonasteries(approvedData);
         setFilteredApprovedMonasteries(approvedData);
-        
-        // Group similar values for all filterable fields using approved data
-        const vehicleGroups = groupSimilarValues(
-          approvedData.map(m => m.vehicle).filter(Boolean) as string[]
-        );
-        const vehicles = Array.from(vehicleGroups.values())
-          .map(group => group[0])
-          .sort();
-        setAvailableVehicles(vehicles);
-
-        const typeGroups = groupSimilarValues(
-          approvedData.map(m => m.center_type).filter(Boolean) as string[]
-        );
-        const types = Array.from(typeGroups.values())
-          .map(group => group[0])
-          .sort();
-        setAvailableTypes(types);
-
-        const settingGroups = groupSimilarValues(
-          approvedData.map(m => m.setting).filter(Boolean) as string[]
-        );
-        const settings = Array.from(settingGroups.values())
-          .map(group => group[0])
-          .sort();
-        setAvailableSettings(settings);
-
-        const priceModelGroups = groupSimilarValues(
-          approvedData.map(m => m.price_model).filter(Boolean) as string[]
-        );
-        const priceModels = Array.from(priceModelGroups.values())
-          .map(group => group[0])
-          .sort();
-        setAvailablePriceModels(priceModels);
-
-        const genderPolicyGroups = groupSimilarValues(
-          approvedData.map(m => m.gender_policy).filter(Boolean) as string[]
-        );
-        const genderPolicies = Array.from(genderPolicyGroups.values())
-          .map(group => group[0])
-          .sort();
-        setAvailableGenderPolicies(genderPolicies);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching monasteries');
       } finally {
@@ -304,11 +235,7 @@ export default function AdminPanel() {
             <div className="w-1/4">
               <FilterPanel
                 monasteries={approvedMonasteries}
-                availableVehicles={availableVehicles}
-                availableTypes={availableTypes}
-                availableSettings={availableSettings}
-                availablePriceModels={availablePriceModels}
-                availableGenderPolicies={availableGenderPolicies}
+                {...filterOptions}
                 onFilter={handleFilter}
               />
             </div>
@@ -388,11 +315,7 @@ export default function AdminPanel() {
           monastery={editingMonastery}
           onClose={handleEditClose}
           onSave={editingMonastery.pending ? handleEditSave : handleEditSaveApproved}
-          availableVehicles={availableVehicles}
-          availableTypes={availableTypes}
-          availableSettings={availableSettings}
-          availablePriceModels={availablePriceModels}
-          availableGenderPolicies={availableGenderPolicies}
+          {...filterOptions}
         />
       )}
 

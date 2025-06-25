@@ -20,6 +20,7 @@ interface FilterPanelProps {
   availableSettings: string[];
   availablePriceModels: string[];
   availableGenderPolicies: string[];
+  availableTraditions: string[];
   onFilter: (filteredMonasteries: Monastery[]) => void;
 }
 
@@ -30,10 +31,12 @@ export default function FilterPanel({
   availableSettings,
   availablePriceModels,
   availableGenderPolicies,
+  availableTraditions,
   onFilter
 }: FilterPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicleFilters, setVehicleFilters] = useState<string[]>([]);
+  const [traditionFilters, setTraditionFilters] = useState<string[]>([]);
   const [typeFilters, setTypeFilters] = useState<string[]>([]);
   const [locationFilter, setLocationFilter] = useState('');
   const [settingFilters, setSettingFilters] = useState<string[]>([]);
@@ -70,6 +73,13 @@ export default function FilterPanel({
         vehicleFilters.some(filter => 
           normalizeText(monastery.vehicle || '') === normalizeText(filter)
         );
+
+      const matchesTradition = traditionFilters.length === 0 ||
+        traditionFilters.some(filter => 
+          monastery.traditions?.some(tradition =>
+            normalizeText(tradition) === normalizeText(filter)
+          )
+        );
       
       const matchesType = typeFilters.length === 0 || 
         typeFilters.some(filter => 
@@ -100,12 +110,12 @@ export default function FilterPanel({
       const matchesOrdinationPossible = ordinationPossibleFilter === null ||
         monastery.ordination_possible === ordinationPossibleFilter;
 
-      return matchesSearch && matchesVehicle && matchesType && matchesLocation &&
+      return matchesSearch && matchesVehicle && matchesTradition && matchesType && matchesLocation &&
              matchesSetting && matchesPriceModel && matchesBeginnerFriendly &&
              matchesGenderPolicy && matchesOrdinationPossible;
     });
   }, [
-    monasteries, searchTerm, vehicleFilters, typeFilters, locationFilter,
+    monasteries, searchTerm, vehicleFilters, traditionFilters, typeFilters, locationFilter,
     settingFilters, priceModelFilters, beginnerFriendlyFilter, genderPolicyFilters,
     ordinationPossibleFilter
   ]);
@@ -117,6 +127,7 @@ export default function FilterPanel({
   const clearFilters = () => {
     setSearchTerm('');
     setVehicleFilters([]);
+    setTraditionFilters([]);
     setTypeFilters([]);
     setLocationFilter('');
     setSettingFilters([]);
@@ -147,7 +158,7 @@ export default function FilterPanel({
         {/* Search */}
         <div className="space-y-1">
           <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-            Search monasteries
+            Search for a Buddhist center
           </label>
           <input
             id="search"
@@ -162,13 +173,13 @@ export default function FilterPanel({
         {/* Location */}
         <div className="space-y-1">
           <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-            Location
+            Search by location
           </label>
           <input
             id="location"
             type="text"
             className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent"
-            placeholder="E.g. 'New York', 'Thailand', 'Philbrick Hill Road', etc.)"
+            placeholder="New York, Thailand, 123 Main St, etc."
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
           />
@@ -212,7 +223,7 @@ export default function FilterPanel({
         {/* Vehicle */}
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">
-            Buddhist Vehicle
+            Vehicle
           </label>
           <div className="relative">
             <button
@@ -236,6 +247,41 @@ export default function FilterPanel({
                         className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
                       />
                       <span className="text-sm text-gray-900">{vehicle}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tradition */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Tradition
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'tradition' ? null : 'tradition')}
+              className="w-full p-2 text-sm text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#286B88] focus:border-transparent bg-white text-gray-900"
+            >
+              {traditionFilters.length > 0 
+                ? traditionFilters.join(', ')
+                : 'Select traditions'}
+            </button>
+            {openDropdown === 'tradition' && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                  {availableTraditions.map(tradition => (
+                    <label key={tradition} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        checked={traditionFilters.includes(tradition)}
+                        onChange={() => handleMultiSelect(tradition, traditionFilters, setTraditionFilters)}
+                        className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{tradition}</span>
                     </label>
                   ))}
                 </div>
@@ -431,7 +477,7 @@ export default function FilterPanel({
         <div className="pt-4 border-t border-gray-200 mt-6">
           <button
             onClick={clearFilters}
-            disabled={!(searchTerm || vehicleFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
+            disabled={!(searchTerm || vehicleFilters.length > 0 || traditionFilters.length > 0 || typeFilters.length > 0 || locationFilter ||
               settingFilters.length > 0 || priceModelFilters.length > 0 || beginnerFriendlyFilter !== null || 
               genderPolicyFilters.length > 0 || ordinationPossibleFilter !== null)}
             className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"

@@ -24,7 +24,6 @@ export type Database = {
           languages_spoken: string[] | null
           latitude: number | null
           length_of_stay: string | null
-          lineages: string[] | null
           longitude: number | null
           name: string
           ordination_possible: boolean | null
@@ -53,7 +52,6 @@ export type Database = {
           languages_spoken?: string[] | null
           latitude?: number | null
           length_of_stay?: string | null
-          lineages?: string[] | null
           longitude?: number | null
           name: string
           ordination_possible?: boolean | null
@@ -82,7 +80,6 @@ export type Database = {
           languages_spoken?: string[] | null
           latitude?: number | null
           length_of_stay?: string | null
-          lineages?: string[] | null
           longitude?: number | null
           name?: string
           ordination_possible?: boolean | null

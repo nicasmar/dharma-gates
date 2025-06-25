@@ -44,7 +44,6 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false, o
     involvement_method,
     languages_spoken,
     length_of_stay,
-    lineages,
     practices,
     price_details,
     price_model,
@@ -197,18 +196,7 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false, o
               </div>
             </div>
           )}
-          {lineages && lineages.length > 0 && (
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lineages</h4>
-              <div className="flex flex-wrap gap-1">
-                {lineages.map((lineage, index) => (
-                  <span key={index} className="px-1.5 py-0.5 text-xs font-medium bg-gray-50 text-gray-700 rounded-full border border-gray-200">
-                    {lineage}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+
           {traditions && traditions.length > 0 && (
             <div className="space-y-0.5">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Traditions</h4>

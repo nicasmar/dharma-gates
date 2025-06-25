@@ -10,6 +10,7 @@ interface SuggestCenterFormProps {
   availableSettings: string[];
   availablePriceModels: string[];
   availableGenderPolicies: string[];
+  availableTraditions: string[];
 }
 
 interface FormData {
@@ -28,7 +29,6 @@ interface FormData {
   involvement_method: string | null;
   languages_spoken: string[] | null;
   length_of_stay: string | null;
-  lineages: string[] | null;
   practices: string[] | null;
   price_details: string | null;
   price_model: string | null;
@@ -46,7 +46,8 @@ export default function SuggestCenterForm({
   availableTypes, 
   availableSettings, 
   availablePriceModels, 
-  availableGenderPolicies 
+  availableGenderPolicies,
+  availableTraditions 
 }: SuggestCenterFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -64,7 +65,6 @@ export default function SuggestCenterForm({
     involvement_method: '',
     languages_spoken: [],
     length_of_stay: '',
-    lineages: [],
     practices: [],
     price_details: '',
     price_model: '',
@@ -91,11 +91,13 @@ export default function SuggestCenterForm({
   const [showCustomSetting, setShowCustomSetting] = useState(false);
   const [showCustomPriceModel, setShowCustomPriceModel] = useState(false);
   const [showCustomGenderPolicy, setShowCustomGenderPolicy] = useState(false);
+  const [showCustomTradition, setShowCustomTradition] = useState(false);
   const [customCenterType, setCustomCenterType] = useState('');
   const [customVehicle, setCustomVehicle] = useState('');
   const [customSetting, setCustomSetting] = useState('');
   const [customPriceModel, setCustomPriceModel] = useState('');
   const [customGenderPolicy, setCustomGenderPolicy] = useState('');
+  const [customTradition, setCustomTradition] = useState('');
 
   const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -204,10 +206,19 @@ export default function SuggestCenterForm({
           setShowCustomGenderPolicy(true);
           setFormData(prev => ({ ...prev, gender_policy: '' }));
           break;
+        case 'traditions':
+          setShowCustomTradition(true);
+          setFormData(prev => ({ ...prev, traditions: [] }));
+          break;
       }
     } else {
       // Handle regular selections
-      setFormData(prev => ({ ...prev, [fieldName]: value || null }));
+      if (fieldName === 'traditions') {
+        // Traditions is an array field, so we need to convert the single selection to an array
+        setFormData(prev => ({ ...prev, [fieldName]: value ? [value] : null }));
+      } else {
+        setFormData(prev => ({ ...prev, [fieldName]: value || null }));
+      }
       // Hide custom input if switching away from "Other"
       switch (fieldName) {
         case 'center_type':
@@ -229,6 +240,10 @@ export default function SuggestCenterForm({
         case 'gender_policy':
           setShowCustomGenderPolicy(false);
           setCustomGenderPolicy('');
+          break;
+        case 'traditions':
+          setShowCustomTradition(false);
+          setCustomTradition('');
           break;
       }
     }
@@ -261,6 +276,10 @@ export default function SuggestCenterForm({
         setCustomGenderPolicy(value);
         setFormData(prev => ({ ...prev, gender_policy: value }));
         break;
+      case 'traditions':
+        setCustomTradition(value);
+        setFormData(prev => ({ ...prev, traditions: value ? value.split(',').map(item => item.trim()) : null }));
+        break;
     }
     
     // Clear error when field is modified
@@ -274,9 +293,9 @@ export default function SuggestCenterForm({
     
     if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else if (name === 'languages_spoken' || name === 'lineages' || name === 'practices' || name === 'teachers' || name === 'traditions') {
+    } else if (name === 'languages_spoken' || name === 'practices' || name === 'teachers') {
       setFormData(prev => ({ ...prev, [name]: value ? value.split(',').map(item => item.trim()) : null }));
-    } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy') {
+    } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy' || name === 'traditions') {
       handleSelectChange(name, value);
       return;
     } else {
@@ -733,17 +752,7 @@ export default function SuggestCenterForm({
                   placeholder="English, Spanish, French"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Lineages</label>
-                <input
-                  type="text"
-                  name="lineages"
-                  value={formData.lineages?.join(', ') || ''}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                  placeholder="Zen, Theravada, Tibetan"
-                />
-              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Practices</label>
                 <input
@@ -768,14 +777,27 @@ export default function SuggestCenterForm({
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Traditions</label>
-                <input
-                  type="text"
+                <select
                   name="traditions"
-                  value={formData.traditions?.join(', ') || ''}
+                  value={showCustomTradition ? 'Other' : (formData.traditions?.join(', ') || '')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
-                  placeholder="Buddhist traditions"
-                />
+                >
+                  <option value="">Select traditions</option>
+                  {availableTraditions.map(tradition => (
+                    <option key={tradition} value={tradition}>{tradition}</option>
+                  ))}
+                  <option value="Other">Other (specify below)</option>
+                </select>
+                {showCustomTradition && (
+                  <input
+                    type="text"
+                    value={customTradition}
+                    onChange={(e) => handleCustomInputChange('traditions', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] mt-2"
+                    placeholder="Enter custom traditions"
+                  />
+                )}
               </div>
             </div>
 
