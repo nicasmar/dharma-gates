@@ -48,6 +48,21 @@ export const deleteMonastery = async (id: string) => {
   }
 }
 
+export const updateMonastery = async (id: string, centerData: Partial<CenterData>) => {
+  const { data, error } = await supabase
+    .from('monasteries')
+    .update(centerData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export const submitNewCenter = async (centerData: CenterData) => {
   const { error } = await supabase
     .from('monasteries')

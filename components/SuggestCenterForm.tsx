@@ -147,21 +147,21 @@ export default function SuggestCenterForm({
       newErrors.description = 'Description is required';
     }
     
-    // Validate location input based on mode
+    // Validate location input based on mode - location is required
     if (inputMode === 'address') {
       if (!addressInput.trim()) {
-        newErrors.latitude = 'Address is required';
+        newErrors.latitude = 'Address is required for location';
       }
     } else {
       if (!coordinates.trim()) {
-        newErrors.latitude = 'Coordinates are required';
+        newErrors.latitude = 'Coordinates are required for location';
       } else {
         const [lat, lon] = coordinates.split(',').map(coord => coord.trim());
         const latitude = parseFloat(lat);
         const longitude = parseFloat(lon);
         
         if (isNaN(latitude) || isNaN(longitude)) {
-          newErrors.latitude = 'Invalid coordinate format';
+          newErrors.latitude = 'Invalid coordinate format (use: latitude, longitude)';
         } else if (latitude < -90 || latitude > 90) {
           newErrors.latitude = 'Latitude must be between -90 and 90';
         } else if (longitude < -180 || longitude > 180) {
@@ -310,10 +310,21 @@ export default function SuggestCenterForm({
       
       if (data && data.length > 0) {
         const result = data[0];
+        const addressDetails = result.address || {};
+        
+        // Extract country and state/province from structured address data
+        const country = addressDetails.country || '';
+        const state = addressDetails.state || 
+                     addressDetails.province || 
+                     addressDetails.region || 
+                     addressDetails['ISO3166-2-lvl4'] || '';
+        
         return {
           latitude: parseFloat(result.lat),
           longitude: parseFloat(result.lon),
-          display_name: result.display_name
+          display_name: result.display_name,
+          country,
+          state
         };
       }
       return null;
@@ -343,7 +354,20 @@ export default function SuggestCenterForm({
       console.log('Reverse geocoding response:', data);
       
       if (data && data.display_name) {
-        return data.display_name;
+        const addressDetails = data.address || {};
+        
+        // Extract country and state/province from structured address data
+        const country = addressDetails.country || '';
+        const state = addressDetails.state || 
+                     addressDetails.province || 
+                     addressDetails.region || 
+                     addressDetails['ISO3166-2-lvl4'] || '';
+        
+        return {
+          display_name: data.display_name,
+          country,
+          state
+        };
       }
       return null;
     } catch (error) {
@@ -373,7 +397,8 @@ export default function SuggestCenterForm({
         }
         finalLatitude = geocodeResult.latitude;
         finalLongitude = geocodeResult.longitude;
-        finalAddress = geocodeResult.display_name;
+        // Store structured address: display_name|||country|||state
+        finalAddress = `${geocodeResult.display_name}|||${geocodeResult.country}|||${geocodeResult.state}`;
       } else {
         // We have coordinates, get address from them
         if (formData.latitude === null || formData.longitude === null) {
@@ -386,7 +411,8 @@ export default function SuggestCenterForm({
           setGeocodingError('Could not find address for these coordinates');
           return;
         }
-        finalAddress = address;
+        // Store structured address: display_name|||country|||state
+        finalAddress = `${address.display_name}|||${address.country}|||${address.state}`;
       }
 
       // Update form data with final coordinates and address
@@ -516,7 +542,7 @@ export default function SuggestCenterForm({
                     placeholder="e.g., 1234 Main St, City, State, Country"
                   />
                   <div className="mt-1 text-xs text-gray-500">
-                    <p>Enter the address of the center.</p>
+                    <p>Enter the address of the center. This is required to help visitors find the location.</p>
                   </div>
                 </>
               ) : (
@@ -529,7 +555,7 @@ export default function SuggestCenterForm({
                     placeholder="e.g., 15.1234, 104.5678"
                   />
                   <div className="mt-1 text-xs text-gray-500">
-                    <p>Enter the exact coordinates of the center (latitude, longitude). You can find these on Google Maps by right-clicking the location.</p>
+                    <p>Enter the exact coordinates of the center (latitude, longitude). This is required to help visitors find the location. You can find coordinates on Google Maps by right-clicking the location.</p>
                   </div>
                 </>
               )}
@@ -791,15 +817,27 @@ export default function SuggestCenterForm({
               </div>
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="beginner_friendly"
-                checked={formData.beginner_friendly || false}
-                onChange={handleChange}
-                className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-[#286B88]/20 rounded"
-              />
-              <label className="ml-2 block text-sm text-[#286B88]/80">Beginner Friendly</label>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="beginner_friendly"
+                  checked={formData.beginner_friendly || false}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-[#286B88]/20 rounded"
+                />
+                <label className="ml-2 block text-sm text-[#286B88]/80">Beginner Friendly</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="ordination_possible"
+                  checked={formData.ordination_possible || false}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-[#286B88]/20 rounded"
+                />
+                <label className="ml-2 block text-sm text-[#286B88]/80">Ordination Possible</label>
+              </div>
             </div>
           </div>
         )}

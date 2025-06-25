@@ -1,25 +1,117 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Database } from '../lib/database.types';
 import { getMonasteries, updateMonasteryPendingStatus, deleteMonastery } from '@/lib/supabase';
 import MonasteryCard from './MonasteryCard';
+import EditCenterForm from './EditCenterForm';
+import MonasteryTable from "./MonasteryTable";
+import MapWrapper from './MapWrapper';
+import FilterPanel from "./FilterPanel";
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
+type MonasteryWithTimestamp = Monastery & { lastUpdated?: number };
+
+// Function to normalize text by removing accents and converting to lowercase
+const normalizeText = (text: string): string => {
+  return text
+    .normalize('NFD')  // Decompose characters with accents
+    .replace(/[\u0300-\u036f]/g, '')  // Remove accents
+    .toLowerCase()  // Convert to lowercase
+    .trim();  // Remove leading/trailing whitespace
+};
+
+// Function to group similar values
+const groupSimilarValues = (values: string[]): Map<string, string[]> => {
+  const groups = new Map<string, string[]>();
+  
+  values.forEach(value => {
+    if (!value) return;
+    const normalized = normalizeText(value);
+    const existing = groups.get(normalized);
+    if (existing) {
+      if (!existing.includes(value)) {
+        existing.push(value);
+      }
+    } else {
+      groups.set(normalized, [value]);
+    }
+  });
+  
+  return groups;
+};
 
 export default function AdminPanel() {
-  const [monasteries, setMonasteries] = useState<Monastery[]>([]);
+  const [monasteries, setMonasteries] = useState<MonasteryWithTimestamp[]>([]);
+  const [approvedMonasteries, setApprovedMonasteries] = useState<MonasteryWithTimestamp[]>([]);
+  const [filteredApprovedMonasteries, setFilteredApprovedMonasteries] = useState<MonasteryWithTimestamp[]>([]);
   const [totalCenters, setTotalCenters] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingMonastery, setEditingMonastery] = useState<Monastery | null>(null);
+  const [deleteConfirmMonastery, setDeleteConfirmMonastery] = useState<Monastery | null>(null);
+  const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
+  const [selectedMonastery, setSelectedMonastery] = useState<Monastery | null>(null);
+  const [availableVehicles, setAvailableVehicles] = useState<string[]>([]);
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [availableSettings, setAvailableSettings] = useState<string[]>([]);
+  const [availablePriceModels, setAvailablePriceModels] = useState<string[]>([]);
+  const [availableGenderPolicies, setAvailableGenderPolicies] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        const data = await getMonasteries(); // Only fetch pending monasteries
+        const data = await getMonasteries();
         setTotalCenters(data.length);
-        setMonasteries(data.filter(m => m.pending));
+        
+        const pendingData = data.filter(m => m.pending);
+        const approvedData = data.filter(m => !m.pending);
+        
+        setMonasteries(pendingData);
+        setApprovedMonasteries(approvedData);
+        setFilteredApprovedMonasteries(approvedData);
+        
+        // Group similar values for all filterable fields using approved data
+        const vehicleGroups = groupSimilarValues(
+          approvedData.map(m => m.vehicle).filter(Boolean) as string[]
+        );
+        const vehicles = Array.from(vehicleGroups.values())
+          .map(group => group[0])
+          .sort();
+        setAvailableVehicles(vehicles);
+
+        const typeGroups = groupSimilarValues(
+          approvedData.map(m => m.center_type).filter(Boolean) as string[]
+        );
+        const types = Array.from(typeGroups.values())
+          .map(group => group[0])
+          .sort();
+        setAvailableTypes(types);
+
+        const settingGroups = groupSimilarValues(
+          approvedData.map(m => m.setting).filter(Boolean) as string[]
+        );
+        const settings = Array.from(settingGroups.values())
+          .map(group => group[0])
+          .sort();
+        setAvailableSettings(settings);
+
+        const priceModelGroups = groupSimilarValues(
+          approvedData.map(m => m.price_model).filter(Boolean) as string[]
+        );
+        const priceModels = Array.from(priceModelGroups.values())
+          .map(group => group[0])
+          .sort();
+        setAvailablePriceModels(priceModels);
+
+        const genderPolicyGroups = groupSimilarValues(
+          approvedData.map(m => m.gender_policy).filter(Boolean) as string[]
+        );
+        const genderPolicies = Array.from(genderPolicyGroups.values())
+          .map(group => group[0])
+          .sort();
+        setAvailableGenderPolicies(genderPolicies);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching monasteries');
       } finally {
@@ -29,7 +121,7 @@ export default function AdminPanel() {
     fetchData();
   }, []);
 
-  const handleViewOnMap = (monastery: Monastery) => {
+  const handleViewOnMapPending = (monastery: Monastery) => {
     // TODO: Implement view on map functionality
     console.log('View on map:', monastery);
   };
@@ -55,6 +147,81 @@ export default function AdminPanel() {
       console.error('Error rejecting monastery:', err);
       setError('Failed to reject monastery. Please try again.');
     }
+  };
+
+  const handleEdit = (monastery: Monastery) => {
+    setEditingMonastery(monastery);
+  };
+
+  const handleEditSave = (updatedMonastery: Monastery) => {
+    // Update the monastery in the local state with a timestamp to force re-render
+    setMonasteries(prev => {
+      const monasteryWithTimestamp = { 
+        ...updatedMonastery, 
+        lastUpdated: Date.now() 
+      } as Monastery & { lastUpdated: number };
+      
+      const newMonasteries = prev.map(m => 
+        m.id === updatedMonastery.id ? monasteryWithTimestamp : m
+      );
+      return newMonasteries;
+    });
+  };
+
+  const handleEditClose = () => {
+    setEditingMonastery(null);
+  };
+
+  const handleFilter = useCallback((filtered: Monastery[]) => {
+    setFilteredApprovedMonasteries(filtered);
+  }, []);
+
+  const handleViewOnMap = useCallback((monastery: Monastery) => {
+    setSelectedMonastery(monastery);
+    setActiveTab('map');
+  }, []);
+
+  const handleEditApproved = (monastery: Monastery) => {
+    setEditingMonastery(monastery);
+  };
+
+  const handleEditSaveApproved = (updatedMonastery: Monastery) => {
+    // Update both the full approved list and filtered list
+    const monasteryWithTimestamp = { 
+      ...updatedMonastery, 
+      lastUpdated: Date.now() 
+    } as MonasteryWithTimestamp;
+
+    setApprovedMonasteries(prev => 
+      prev.map(m => m.id === updatedMonastery.id ? monasteryWithTimestamp : m)
+    );
+    setFilteredApprovedMonasteries(prev => 
+      prev.map(m => m.id === updatedMonastery.id ? monasteryWithTimestamp : m)
+    );
+  };
+
+  const handleDeleteRequest = (monastery: Monastery) => {
+    setDeleteConfirmMonastery(monastery);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmMonastery) return;
+    
+    try {
+      await deleteMonastery(deleteConfirmMonastery.id);
+      // Remove from both lists
+      setApprovedMonasteries(prev => prev.filter(m => m.id !== deleteConfirmMonastery.id));
+      setFilteredApprovedMonasteries(prev => prev.filter(m => m.id !== deleteConfirmMonastery.id));
+      setTotalCenters(prev => prev - 1);
+      setDeleteConfirmMonastery(null);
+    } catch (err) {
+      console.error('Error deleting monastery:', err);
+      setError('Failed to delete monastery. Please try again.');
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmMonastery(null);
   };
 
   return (
@@ -96,12 +263,19 @@ export default function AdminPanel() {
                   <div key={monastery.id} className="flex gap-4">
                     <div className="flex-1">
                       <MonasteryCard 
+                        key={`${monastery.id}-${monastery.lastUpdated || 'initial'}`}
                         monastery={monastery} 
-                        onViewOnMap={handleViewOnMap}
+                        onViewOnMap={handleViewOnMapPending}
                         admin={true}
                       />
                     </div>
                     <div className="flex flex-col justify-center gap-2">
+                      <button 
+                        onClick={() => handleEdit(monastery)}
+                        className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                      >
+                        Edit
+                      </button>
                       <button 
                         onClick={() => handleAccept(monastery)}
                         className="px-4 py-2 text-sm bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90"
@@ -121,7 +295,131 @@ export default function AdminPanel() {
             )}
           </div>
         </div>
+
+        {/* Approved Centers Directory */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mt-8">
+          <h2 className="text-xl font-medium text-gray-900 mb-6">Approved Centers Directory</h2>
+          
+          <div className="flex gap-8">
+            <div className="w-1/4">
+              <FilterPanel
+                monasteries={approvedMonasteries}
+                availableVehicles={availableVehicles}
+                availableTypes={availableTypes}
+                availableSettings={availableSettings}
+                availablePriceModels={availablePriceModels}
+                availableGenderPolicies={availableGenderPolicies}
+                onFilter={handleFilter}
+              />
+            </div>
+            
+            <div className="flex-1">
+              <div className="border-b border-gray-200 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setActiveTab('map')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+                        activeTab === 'map'
+                          ? 'bg-[#286B88] text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Map View
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('table')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+                        activeTab === 'table'
+                          ? 'bg-[#286B88] text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Table View
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[600px] rounded-lg overflow-y-auto">
+                {loading ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 border-4 border-t-[#286B88] border-[#286B88]/20 rounded-full animate-spin mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading monasteries...</p>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-rose-700 text-lg font-medium mb-4">Error loading monasteries</p>
+                      <p className="text-rose-600">{error}</p>
+                    </div>
+                  </div>
+                ) : activeTab === 'map' ? (
+                  <div className="w-full h-full">
+                    <MapWrapper
+                      selectedMonastery={selectedMonastery}
+                      monasteries={filteredApprovedMonasteries}
+                      onEditMonastery={handleEditApproved}
+                      onDeleteMonastery={handleDeleteRequest}
+                      admin={true}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-full">
+                    <MonasteryTable 
+                      monasteries={filteredApprovedMonasteries}
+                      onViewOnMap={handleViewOnMap}
+                      onEditMonastery={handleEditApproved}
+                      onDeleteMonastery={handleDeleteRequest}
+                      admin={true}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      {editingMonastery && (
+        <EditCenterForm
+          monastery={editingMonastery}
+          onClose={handleEditClose}
+          onSave={editingMonastery.pending ? handleEditSave : handleEditSaveApproved}
+          availableVehicles={availableVehicles}
+          availableTypes={availableTypes}
+          availableSettings={availableSettings}
+          availablePriceModels={availablePriceModels}
+          availableGenderPolicies={availableGenderPolicies}
+        />
+      )}
+
+      {deleteConfirmMonastery && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete "{deleteConfirmMonastery.name}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

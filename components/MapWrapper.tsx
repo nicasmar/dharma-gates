@@ -12,9 +12,12 @@ type Monastery = Database['public']['Tables']['monasteries']['Row'];
 interface MapWrapperProps {
   selectedMonastery: Monastery | null;
   monasteries: Monastery[];
+  onEditMonastery?: (monastery: Monastery) => void;
+  onDeleteMonastery?: (monastery: Monastery) => void;
+  admin?: boolean;
 }
 
-export default function MapWrapper({ selectedMonastery, monasteries }: MapWrapperProps) {
+export default function MapWrapper({ selectedMonastery, monasteries, onEditMonastery, onDeleteMonastery, admin }: MapWrapperProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,5 +28,11 @@ export default function MapWrapper({ selectedMonastery, monasteries }: MapWrappe
     return <div className="w-full h-full bg-gray-100 flex items-center justify-center">Loading map...</div>;
   }
 
-  return <DynamicMonasteryMap selectedMonastery={selectedMonastery} monasteries={monasteries} />;
+  return <DynamicMonasteryMap 
+    selectedMonastery={selectedMonastery} 
+    monasteries={monasteries}
+    onEditMonastery={onEditMonastery}
+    onDeleteMonastery={onDeleteMonastery}
+    admin={admin}
+  />;
 }

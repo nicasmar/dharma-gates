@@ -7,9 +7,24 @@ interface MonasteryCardProps {
   monastery: Monastery;
   onViewOnMap: (monastery: Monastery) => void;
   admin: boolean;
+  onEditMonastery?: (monastery: Monastery) => void;
+  onDeleteMonastery?: (monastery: Monastery) => void;
 }
 
-export default function MonasteryCard({ monastery, onViewOnMap, admin = false }: MonasteryCardProps) {
+// Helper function to extract clean display address from structured address
+const getDisplayAddress = (address: string | null): string | null => {
+  if (!address) return null;
+  
+  // If address contains structured geocoded data, extract just the display portion
+  if (address.includes('|||')) {
+    return address.split('|||')[0].trim();
+  }
+  
+  // Otherwise return the address as-is
+  return address;
+};
+
+export default function MonasteryCard({ monastery, onViewOnMap, admin = false, onEditMonastery, onDeleteMonastery }: MonasteryCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   
   const {
@@ -22,6 +37,7 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
     email,
     phone,
     beginner_friendly,
+    ordination_possible,
     community_size,
     dietary_info,
     gender_policy,
@@ -59,6 +75,11 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
                   Beginner Friendly
                 </span>
               )}
+              {ordination_possible && (
+                <span className="px-2 py-0.5 text-xs font-semibold bg-[#286B88]/10 text-[#286B88] rounded-full border border-[#286B88]/20">
+                  Ordination Possible
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -85,7 +106,7 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
           {address && (
             <div className="space-y-0.5">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</h4>
-              <p className="text-sm text-gray-900">{address}</p>
+              <p className="text-sm text-gray-900">{getDisplayAddress(address)}</p>
             </div>
           )}
           {setting && (
@@ -202,9 +223,30 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
           )}
         </div>
 
-        {/* Contact Buttons */}
+        {/* Contact/Action Buttons */}
         <div className="flex flex-wrap gap-1.5">
-          {!admin ? (
+          {admin && onEditMonastery && onDeleteMonastery ? (
+            <>
+              <button
+                onClick={() => onViewOnMap(monastery)}
+                className="inline-flex items-center px-2 py-1 text-sm font-semibold text-white bg-[#286B88] rounded-lg hover:bg-[#286B88]/90 transition-colors"
+              >
+                View on Map
+              </button>
+              <button
+                onClick={() => onEditMonastery(monastery)}
+                className="inline-flex items-center px-2 py-1 text-sm font-semibold text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDeleteMonastery(monastery)}
+                className="inline-flex items-center px-2 py-1 text-sm font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition-colors"
+              >
+                Delete
+              </button>
+            </>
+          ) : !admin ? (
             <>
               <button
                   onClick={() => onViewOnMap(monastery)}
