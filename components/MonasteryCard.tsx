@@ -114,7 +114,7 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
           )}
           {involvement_method && (
             <div className="space-y-0.5">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Involvement Method</h4>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">How to get involved</h4>
               <p className="text-sm text-gray-900">{involvement_method}</p>
             </div>
           )}

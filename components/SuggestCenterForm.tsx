@@ -81,6 +81,8 @@ export default function SuggestCenterForm({
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [, setGeocodingError] = useState<string | null>(null);
   const [coordinates, setCoordinates] = useState('');
+  const [addressInput, setAddressInput] = useState('');
+  const [inputMode, setInputMode] = useState<'address' | 'coordinates'>('address');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // State for custom input visibility and values
@@ -119,6 +121,16 @@ export default function SuggestCenterForm({
     }
   };
 
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAddressInput(e.target.value);
+  };
+
+  const handleModeToggle = () => {
+    setInputMode(inputMode === 'address' ? 'coordinates' : 'address');
+    // Clear errors when switching modes
+    setErrors(prev => ({ ...prev, latitude: undefined, longitude: undefined }));
+  };
+
   const validateForm = () => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
     
@@ -134,19 +146,27 @@ export default function SuggestCenterForm({
     if (!formData.description?.trim()) {
       newErrors.description = 'Description is required';
     }
-    if (!coordinates.trim()) {
-      newErrors.latitude = 'Coordinates are required';
+    
+    // Validate location input based on mode
+    if (inputMode === 'address') {
+      if (!addressInput.trim()) {
+        newErrors.latitude = 'Address is required';
+      }
     } else {
-      const [lat, lon] = coordinates.split(',').map(coord => coord.trim());
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
-      
-      if (isNaN(latitude) || isNaN(longitude)) {
-        newErrors.latitude = 'Invalid coordinate format';
-      } else if (latitude < -90 || latitude > 90) {
-        newErrors.latitude = 'Latitude must be between -90 and 90';
-      } else if (longitude < -180 || longitude > 180) {
-        newErrors.longitude = 'Longitude must be between -180 and 180';
+      if (!coordinates.trim()) {
+        newErrors.latitude = 'Coordinates are required';
+      } else {
+        const [lat, lon] = coordinates.split(',').map(coord => coord.trim());
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        
+        if (isNaN(latitude) || isNaN(longitude)) {
+          newErrors.latitude = 'Invalid coordinate format';
+        } else if (latitude < -90 || latitude > 90) {
+          newErrors.latitude = 'Latitude must be between -90 and 90';
+        } else if (longitude < -180 || longitude > 180) {
+          newErrors.longitude = 'Longitude must be between -180 and 180';
+        }
       }
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -269,6 +289,40 @@ export default function SuggestCenterForm({
     }
   };
 
+  const geocodeAddress = async (address: string) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`;
+      console.log('Making geocode request to:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept-Language': 'en',
+          'User-Agent': 'DharmaGates/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+      
+      const data = await response.json();
+      console.log('Geocoding response:', data);
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          display_name: result.display_name
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
   const reverseGeocode = async (lat: number, lon: number) => {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
@@ -306,22 +360,41 @@ export default function SuggestCenterForm({
     setGeocodingError(null);
 
     try {
-      if (formData.latitude === null || formData.longitude === null) {
-        setGeocodingError('Please enter valid coordinates');
-        return;
+      let finalLatitude = formData.latitude;
+      let finalLongitude = formData.longitude;
+      let finalAddress = formData.address;
+
+      if (inputMode === 'address') {
+        // Geocode the address to get coordinates
+        const geocodeResult = await geocodeAddress(addressInput);
+        if (!geocodeResult) {
+          setGeocodingError('Could not find coordinates for this address. Please check the address or try using coordinates instead.');
+          return;
+        }
+        finalLatitude = geocodeResult.latitude;
+        finalLongitude = geocodeResult.longitude;
+        finalAddress = geocodeResult.display_name;
+      } else {
+        // We have coordinates, get address from them
+        if (formData.latitude === null || formData.longitude === null) {
+          setGeocodingError('Please enter valid coordinates');
+          return;
+        }
+        
+        const address = await reverseGeocode(formData.latitude, formData.longitude);
+        if (!address) {
+          setGeocodingError('Could not find address for these coordinates');
+          return;
+        }
+        finalAddress = address;
       }
 
-      // Get address from coordinates
-      const address = await reverseGeocode(formData.latitude, formData.longitude);
-      if (!address) {
-        setGeocodingError('Could not find address for these coordinates');
-        return;
-      }
-
-      // Update form data with address
+      // Update form data with final coordinates and address
       const updatedFormData = {
         ...formData,
-        address
+        latitude: finalLatitude,
+        longitude: finalLongitude,
+        address: finalAddress
       };
 
       // Submit the form
@@ -421,17 +494,45 @@ export default function SuggestCenterForm({
               {errors.vehicle && <p className="mt-1 text-xs text-rose-600">{errors.vehicle}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Coordinates *</label>
-              <input
-                type="text"
-                value={coordinates}
-                onChange={handleCoordinatesChange}
-                className={`w-full px-3 py-2 text-sm border ${errors.latitude ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
-                placeholder="e.g., 15.1234, 104.5678"
-              />
-              <div className="mt-1 text-xs text-gray-500">
-                <p>Enter the exact coordinates of the center (latitude, longitude). You can find these on Google Maps by right-clicking the location.</p>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-[#286B88]/80">Location *</label>
+                <button
+                  type="button"
+                  onClick={handleModeToggle}
+                  className="text-xs text-[#286B88] hover:text-[#286B88]/80 font-medium"
+                >
+                  {inputMode === 'address' ? 'Use coordinates instead' : 'Use address instead'}
+                </button>
               </div>
+              
+              {inputMode === 'address' ? (
+                <>
+                  <input
+                    type="text"
+                    value={addressInput}
+                    onChange={handleAddressChange}
+                    className={`w-full px-3 py-2 text-sm border ${errors.latitude ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
+                    placeholder="e.g., 1234 Main St, City, State, Country"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    <p>Enter the address of the center.</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={coordinates}
+                    onChange={handleCoordinatesChange}
+                    className={`w-full px-3 py-2 text-sm border ${errors.latitude ? 'border-rose-500' : 'border-[#286B88]/20'} rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
+                    placeholder="e.g., 15.1234, 104.5678"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    <p>Enter the exact coordinates of the center (latitude, longitude). You can find these on Google Maps by right-clicking the location.</p>
+                  </div>
+                </>
+              )}
+              
               {errors.latitude && <p className="mt-1 text-xs text-rose-600">{errors.latitude}</p>}
               {errors.longitude && <p className="mt-1 text-xs text-rose-600">{errors.longitude}</p>}
             </div>
@@ -677,7 +778,7 @@ export default function SuggestCenterForm({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#286B88]/80 mb-1">Involvement Method</label>
+                <label className="block text-sm font-medium text-[#286B88]/80 mb-1">How to get involved</label>
                 <input
                   type="text"
                   name="involvement_method"

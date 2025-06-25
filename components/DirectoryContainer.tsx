@@ -39,7 +39,7 @@ const groupSimilarValues = (values: string[]): Map<string, string[]> => {
 };
 
 export default function DirectoryContainer() {
-  const [activeTab, setActiveTab] = useState<'map' | 'table'>('table');
+  const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
   const [showSuggestForm, setShowSuggestForm] = useState(false);
   const [availableVehicles, setAvailableVehicles] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
@@ -156,16 +156,6 @@ export default function DirectoryContainer() {
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setActiveTab('table')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
-                          activeTab === 'table'
-                            ? 'bg-[#286B88] text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Table View
-                      </button>
-                      <button
                         onClick={() => setActiveTab('map')}
                         className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
                           activeTab === 'map'
@@ -174,6 +164,16 @@ export default function DirectoryContainer() {
                         }`}
                       >
                         Map View
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('table')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+                          activeTab === 'table'
+                            ? 'bg-[#286B88] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Table View
                       </button>
                     </div>
                   </div>
