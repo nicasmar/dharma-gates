@@ -314,49 +314,10 @@ export default function FilterPanel({
           </div>
         </div>
 
-        {/* Beginner Friendly */}
+        {/* Gender Distribution */}
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">
-            Beginner Friendly
-          </label>
-          <div className="flex space-x-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="beginner-friendly"
-                checked={beginnerFriendlyFilter === true}
-                onChange={() => setBeginnerFriendlyFilter(true)}
-                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
-              />
-              <span className="ml-1.5 text-sm text-gray-900">Yes</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="beginner-friendly"
-                checked={beginnerFriendlyFilter === false}
-                onChange={() => setBeginnerFriendlyFilter(false)}
-                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
-              />
-              <span className="ml-1.5 text-sm text-gray-900">No</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="beginner-friendly"
-                checked={beginnerFriendlyFilter === null}
-                onChange={() => setBeginnerFriendlyFilter(null)}
-                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
-              />
-              <span className="ml-1.5 text-sm text-gray-900">Any</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Gender Policy */}
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Gender Policy
+            Gender Distribution
           </label>
           <div className="relative">
             <button
@@ -366,7 +327,7 @@ export default function FilterPanel({
             >
               {genderPolicyFilters.length > 0 
                 ? genderPolicyFilters.join(', ')
-                : 'Select gender policies'}
+                : 'Select gender distributions'}
             </button>
             {openDropdown === 'gender' && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
@@ -388,12 +349,61 @@ export default function FilterPanel({
           </div>
         </div>
 
+        {/* Beginner Friendly */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Beginner Friendly
+          </label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="beginner-friendly"
+                checked={beginnerFriendlyFilter === null}
+                onChange={() => setBeginnerFriendlyFilter(null)}
+                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
+              />
+              <span className="ml-1.5 text-sm text-gray-900">Any</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="beginner-friendly"
+                checked={beginnerFriendlyFilter === true}
+                onChange={() => setBeginnerFriendlyFilter(true)}
+                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
+              />
+              <span className="ml-1.5 text-sm text-gray-900">Yes</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="beginner-friendly"
+                checked={beginnerFriendlyFilter === false}
+                onChange={() => setBeginnerFriendlyFilter(false)}
+                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
+              />
+              <span className="ml-1.5 text-sm text-gray-900">No</span>
+            </label>
+          </div>
+        </div>
+
         {/* Ordination Possible */}
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">
             Ordination Possible
           </label>
           <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="ordination-possible"
+                checked={ordinationPossibleFilter === null}
+                onChange={() => setOrdinationPossibleFilter(null)}
+                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
+              />
+              <span className="ml-1.5 text-sm text-gray-900">Any</span>
+            </label>
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -413,16 +423,6 @@ export default function FilterPanel({
                 className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
               />
               <span className="ml-1.5 text-sm text-gray-900">No</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="ordination-possible"
-                checked={ordinationPossibleFilter === null}
-                onChange={() => setOrdinationPossibleFilter(null)}
-                className="h-3 w-3 text-[#286B88] focus:ring-[#286B88]"
-              />
-              <span className="ml-1.5 text-sm text-gray-900">Any</span>
             </label>
           </div>
         </div>

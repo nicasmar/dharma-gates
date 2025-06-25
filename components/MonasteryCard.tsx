@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Database } from '../lib/database.types';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
@@ -9,6 +10,8 @@ interface MonasteryCardProps {
 }
 
 export default function MonasteryCard({ monastery, onViewOnMap, admin = false }: MonasteryCardProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
   const {
     name,
     center_type,
@@ -33,6 +36,9 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
     teachers,
     traditions
   } = monastery;
+
+  // Check if description is long enough to need expansion (roughly 2 lines worth of text)
+  const isLongDescription = description && description.length > 150;
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
@@ -59,7 +65,19 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false }:
 
         {/* Description */}
         {description && (
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{description}</p>
+          <div className="mb-2">
+            <p className={`text-sm text-gray-600 ${!isDescriptionExpanded && isLongDescription ? 'line-clamp-2' : ''}`}>
+              {description}
+            </p>
+            {isLongDescription && (
+              <button
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="text-xs text-[#286B88] hover:text-[#286B88]/80 font-medium mt-1 focus:outline-none"
+              >
+                {isDescriptionExpanded ? 'Read less' : 'Read more'}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Key Information Grid */}
