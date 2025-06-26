@@ -77,6 +77,7 @@ export default function DirectoryContainer({ admin = false, onEditMonastery, onD
               availablePriceModels={filterOptions.availablePriceModels}
               availableGenderPolicies={filterOptions.availableGenderPolicies}
               availableTraditions={filterOptions.availableTraditions}
+              availableDiets={filterOptions.availableDiets}
             />
           ) : (
             <div className="flex gap-8">
