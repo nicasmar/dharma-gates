@@ -11,9 +11,13 @@ import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
+interface DirectoryContainerProps {
+  admin?: boolean;
+  onEditMonastery?: (monastery: Monastery) => void;
+  onDeleteMonastery?: (monastery: Monastery) => void;
+}
 
-
-export default function DirectoryContainer() {
+export default function DirectoryContainer({ admin = false, onEditMonastery, onDeleteMonastery }: DirectoryContainerProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
   const [showSuggestForm, setShowSuggestForm] = useState(false);
   const [monasteries, setMonasteries] = useState<Monastery[]>([]);
@@ -131,18 +135,37 @@ export default function DirectoryContainer() {
                     </div>
                   </div>
                 ) : activeTab === 'map' ? (
-                  <div className="h-[600px] rounded-lg overflow-hidden">
-                    <MapWrapper 
-                      selectedMonastery={selectedMonastery}
-                      monasteries={filteredMonasteries}
-                      onSelectMonastery={handleSelectMonastery}
-                    />
+                  <div className="space-y-4 max-h-[1200px] overflow-y-auto">
+                    <div className="h-[700px] rounded-lg overflow-hidden">
+                      <MapWrapper 
+                        selectedMonastery={selectedMonastery}
+                        monasteries={filteredMonasteries}
+                        onSelectMonastery={handleSelectMonastery}
+                        onEditMonastery={onEditMonastery}
+                        onDeleteMonastery={onDeleteMonastery}
+                        admin={admin}
+                      />
+                    </div>
+                    {selectedMonastery && (
+                      <div className="max-h-[350px] overflow-y-auto">
+                        <MonasteryCard 
+                          monastery={selectedMonastery}
+                          onViewOnMap={handleViewOnMap}
+                          onEditMonastery={onEditMonastery}
+                          onDeleteMonastery={onDeleteMonastery}
+                          admin={admin}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="h-[600px] rounded-lg overflow-y-auto">
+                  <div className="max-h-[800px] overflow-y-auto">
                     <MonasteryTable 
                       monasteries={filteredMonasteries} 
                       onViewOnMap={handleViewOnMap}
+                      onEditMonastery={onEditMonastery}
+                      onDeleteMonastery={onDeleteMonastery}
+                      admin={admin}
                     />
                   </div>
                 )}
@@ -151,7 +174,7 @@ export default function DirectoryContainer() {
           )}
         </div>
       </div>
-      <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />
+      {!admin && <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />}
     </div>
   );
 } 

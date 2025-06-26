@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Database } from '../lib/database.types';
+import PhotoGallery from './PhotoGallery';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 
@@ -49,7 +50,8 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false, o
     price_model,
     setting,
     teachers,
-    traditions
+    traditions,
+    photos
   } = monastery;
 
   // Check if description is long enough to need expansion (roughly 2 lines worth of text)
@@ -57,6 +59,16 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false, o
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
+      {/* Photo Gallery */}
+      {photos && photos.length > 0 && (
+        <PhotoGallery 
+          photos={photos} 
+          size="large" 
+          className="mb-4"
+          showCounter={true}
+        />
+      )}
+      
       <div className="p-4">
         {/* Header Section */}
         <div className="flex justify-between items-start mb-2">

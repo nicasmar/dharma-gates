@@ -268,7 +268,7 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              <div className="h-[600px] rounded-lg overflow-y-auto">
+              <div className="max-h-[1200px] overflow-y-auto">
                 {loading ? (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="text-center">
@@ -284,14 +284,28 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 ) : activeTab === 'map' ? (
-                  <div className="w-full h-full">
-                    <MapWrapper
-                      selectedMonastery={selectedMonastery}
-                      monasteries={filteredApprovedMonasteries}
-                      onEditMonastery={handleEditApproved}
-                      onDeleteMonastery={handleDeleteRequest}
-                      admin={true}
-                    />
+                  <div className="space-y-4">
+                    <div className="h-[550px] rounded-lg overflow-hidden">
+                      <MapWrapper
+                        selectedMonastery={selectedMonastery}
+                        monasteries={filteredApprovedMonasteries}
+                        onSelectMonastery={setSelectedMonastery}
+                        onEditMonastery={handleEditApproved}
+                        onDeleteMonastery={handleDeleteRequest}
+                        admin={true}
+                      />
+                    </div>
+                    {selectedMonastery && (
+                      <div className="max-h-[450px] overflow-y-auto">
+                        <MonasteryCard 
+                          monastery={selectedMonastery}
+                          onViewOnMap={handleViewOnMap}
+                          onEditMonastery={handleEditApproved}
+                          onDeleteMonastery={handleDeleteRequest}
+                          admin={true}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="w-full h-full">

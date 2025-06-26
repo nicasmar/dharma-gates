@@ -29,6 +29,7 @@ export type Database = {
           ordination_possible: boolean | null
           pending: boolean
           phone: string | null
+          photos: string[] | null
           practices: string[] | null
           price_details: string | null
           price_model: string | null
@@ -57,6 +58,7 @@ export type Database = {
           ordination_possible?: boolean | null
           pending?: boolean
           phone?: string | null
+          photos?: string[] | null
           practices?: string[] | null
           price_details?: string | null
           price_model?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           ordination_possible?: boolean | null
           pending?: boolean
           phone?: string | null
+          photos?: string[] | null
           practices?: string[] | null
           price_details?: string | null
           price_model?: string | null
