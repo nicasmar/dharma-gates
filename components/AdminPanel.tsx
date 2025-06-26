@@ -338,7 +338,7 @@ export default function AdminPanel() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete "{deleteConfirmMonastery.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteConfirmMonastery.name}&quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button

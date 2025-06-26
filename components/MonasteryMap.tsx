@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import type { Database } from '../lib/database.types';
-import { useEffect, useState } from 'react';
 
 // Fix for default marker icons in Next.js
 const icon = L.icon({
@@ -39,7 +38,7 @@ const truncateDescription = (description: string | null, maxLength: number = 100
 };
 
 // Component to handle initial map bounds - disabled to maintain user control
-function MapController({ monasteries }: { monasteries: MonasteryWithCoordinates[] }) {
+function MapController() {
   // Removed auto-fitting behavior to let users control map position manually
   return null;
 }
@@ -117,7 +116,7 @@ export default function MonasteryMap({ monasteries, selectedMonastery, onSelectM
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        <MapController monasteries={validMonasteries} />
+        <MapController />
 
         {validMonasteries.map((monastery) => (
           <Marker
