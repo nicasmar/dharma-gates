@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, LayersControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { Database } from '../lib/database.types';
+import { useEffect } from 'react';
 
 // Fix for default marker icons in Next.js
 const icon = L.icon({
@@ -40,6 +41,20 @@ const truncateDescription = (description: string | null, maxLength: number = 100
 // Component to handle initial map bounds - disabled to maintain user control
 function MapController() {
   // Removed auto-fitting behavior to let users control map position manually
+  return null;
+}
+
+// Component to handle centering map on selected monastery
+function MapCenterController({ selectedMonastery }: { selectedMonastery: Monastery | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedMonastery && selectedMonastery.latitude && selectedMonastery.longitude) {
+      // Center the map on the selected monastery with a reasonable zoom level
+      map.setView([selectedMonastery.latitude, selectedMonastery.longitude], Math.max(map.getZoom(), 10));
+    }
+  }, [selectedMonastery, map]);
+
   return null;
 }
 
@@ -117,91 +132,102 @@ export default function MonasteryMap({ monasteries, selectedMonastery, onSelectM
         </LayersControl>
 
         <MapController />
+        <MapCenterController selectedMonastery={selectedMonastery} />
 
-        {validMonasteries.map((monastery) => (
-          <Marker
-            key={monastery.id}
-            position={[monastery.latitude, monastery.longitude]}
-            icon={selectedMonastery?.id === monastery.id ? selectedIcon : icon}
-            eventHandlers={onSelectMonastery ? {
-              click: () => onSelectMonastery(monastery)
-            } : undefined}
-          >
-            <Popup maxWidth={300} minWidth={250}>
-              <div className="p-2">
-                {/* First photo if available */}
-                {monastery.photos && monastery.photos.length > 0 && (
-                  <div className="mb-3">
-                    <img
-                      src={monastery.photos[0]}
-                      alt={monastery.name}
-                      className="w-full h-32 object-cover rounded-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-                <h3 className="font-bold text-lg mb-2">{monastery.name}</h3>
-                {monastery.description && (
-                  <p className="text-gray-600 mb-3">{truncateDescription(monastery.description, 150)}</p>
-                )}
-                
-                <div className="flex flex-col gap-2">
-                  {/* Street View Button */}
-                  <StreetViewButton lat={monastery.latitude} lng={monastery.longitude} />
-                  
-                  {admin && onEditMonastery && onDeleteMonastery ? (
-                    <>
-                      <button
-                        onClick={() => onEditMonastery(monastery)}
-                        className="px-2 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDeleteMonastery(monastery)}
-                        className="px-2 py-1 text-sm bg-rose-600 text-white rounded hover:bg-rose-700"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {monastery.website && (
-                        <a
-                          href={monastery.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2 py-1 text-sm bg-[#286B88] text-white rounded hover:bg-[#286B88]/90 text-center !text-white"
-                        >
-                          Visit Website
-                        </a>
-                      )}
-                      <button
-                        onClick={() => {
-                          // Use address if available, otherwise use coordinates
-                          if (monastery.address) {
-                            const address = monastery.address.split('|||')[0] || monastery.address;
-                            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-                            window.open(url, '_blank');
-                          } else {
-                            // Use coordinates directly
-                            const url = `https://www.google.com/maps/search/?api=1&query=${monastery.latitude},${monastery.longitude}`;
-                            window.open(url, '_blank');
-                          }
+        {validMonasteries.map((monastery) => {
+          const isSelected = selectedMonastery?.id === monastery.id;
+          return (
+            <Marker
+              key={monastery.id}
+              position={[monastery.latitude, monastery.longitude]}
+              icon={isSelected ? selectedIcon : icon}
+              eventHandlers={onSelectMonastery ? {
+                click: () => onSelectMonastery(monastery)
+              } : undefined}
+            >
+            {isSelected ? (
+              <Popup 
+                maxWidth={300} 
+                minWidth={250}
+                autoPan={false}
+                key={`popup-${monastery.id}-selected`}
+              >
+                <div className="p-2">
+                  {/* First photo if available */}
+                  {monastery.photos && monastery.photos.length > 0 && (
+                    <div className="mb-3">
+                      <img
+                        src={monastery.photos[0]}
+                        alt={monastery.name}
+                        className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
                         }}
-                        className="px-2 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-                      >
-                        Get Directions
-                      </button>
-                    </>
+                      />
+                    </div>
                   )}
+                  <h3 className="font-bold text-lg mb-2">{monastery.name}</h3>
+                  {monastery.description && (
+                    <p className="text-gray-600 mb-3">{truncateDescription(monastery.description, 150)}</p>
+                  )}
+                  
+                  <div className="flex flex-col gap-2">
+                    {/* Street View Button */}
+                    <StreetViewButton lat={monastery.latitude} lng={monastery.longitude} />
+                    
+                    {admin && onEditMonastery && onDeleteMonastery ? (
+                      <>
+                        <button
+                          onClick={() => onEditMonastery(monastery)}
+                          className="px-2 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onDeleteMonastery(monastery)}
+                          className="px-2 py-1 text-sm bg-rose-600 text-white rounded hover:bg-rose-700"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {monastery.website && (
+                          <a
+                            href={monastery.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-1 text-sm bg-[#286B88] text-white rounded hover:bg-[#286B88]/90 text-center !text-white"
+                          >
+                            Visit Website
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            // Use address if available, otherwise use coordinates
+                            if (monastery.address) {
+                              const address = monastery.address.split('|||')[0] || monastery.address;
+                              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+                              window.open(url, '_blank');
+                            } else {
+                              // Use coordinates directly
+                              const url = `https://www.google.com/maps/search/?api=1&query=${monastery.latitude},${monastery.longitude}`;
+                              window.open(url, '_blank');
+                            }
+                          }}
+                          className="px-2 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                          Get Directions
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Popup>
+              </Popup>
+            ) : null}
           </Marker>
-        ))}
+          );
+        })}
       </MapContainer>
     </div>
   );
