@@ -7,6 +7,7 @@ import { getMonasteries } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 import ButtonsContainer from './ButtonsContainer';
 import SuggestCenterForm from './SuggestCenterForm';
+import FeedbackForm from './FeedbackForm';
 import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
@@ -20,6 +21,7 @@ interface DirectoryContainerProps {
 export default function DirectoryContainer({ admin = false, onEditMonastery, onDeleteMonastery }: DirectoryContainerProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'table'>('map');
   const [showSuggestForm, setShowSuggestForm] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [monasteries, setMonasteries] = useState<Monastery[]>([]);
   const [filteredMonasteries, setFilteredMonasteries] = useState<Monastery[]>([]);
   const [selectedMonastery, setSelectedMonastery] = useState<Monastery | null>(null);
@@ -78,6 +80,11 @@ export default function DirectoryContainer({ admin = false, onEditMonastery, onD
               availableGenderPolicies={filterOptions.availableGenderPolicies}
               availableTraditions={filterOptions.availableTraditions}
               availableDiets={filterOptions.availableDiets}
+            />
+          ) : showFeedbackForm ? (
+            <FeedbackForm 
+              showFeedbackForm={showFeedbackForm} 
+              setShowFeedbackForm={setShowFeedbackForm}
             />
           ) : (
             <div className="flex gap-8">
@@ -175,7 +182,7 @@ export default function DirectoryContainer({ admin = false, onEditMonastery, onD
           )}
         </div>
       </div>
-      {!admin && <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} />}
+      {!admin && <ButtonsContainer onSuggestCenter={() => setShowSuggestForm(true)} onGiveFeedback={() => setShowFeedbackForm(true)} />}
     </div>
   );
 } 

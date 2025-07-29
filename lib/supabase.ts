@@ -72,3 +72,29 @@ export const submitNewCenter = async (centerData: CenterData) => {
     throw error;
   }
 }
+
+// Feedback functions
+type FeedbackData = Database['public']['Tables']['feedback']['Insert']
+
+export const submitFeedback = async (feedbackData: FeedbackData) => {
+  const { error } = await supabase
+    .from('feedback')
+    .insert([feedbackData]);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export const getFeedback = async () => {
+  const { data, error } = await supabase
+    .from('feedback')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}

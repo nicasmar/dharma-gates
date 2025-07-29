@@ -8,6 +8,7 @@ import EditCenterForm from './EditCenterForm';
 import MonasteryTable from "./MonasteryTable";
 import MapWrapper from './MapWrapper';
 import FilterPanel from "./FilterPanel";
+import FeedbackPanel from './FeedbackPanel';
 import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
@@ -172,7 +173,9 @@ export default function AdminPanel() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
+          <FeedbackPanel />
+
+          <div className="border-t border-gray-200 pt-6 mt-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Pending Center Reviews</h2>
             {loading ? (
               <div className="text-center py-8">
