@@ -64,7 +64,8 @@ export default function FeedbackForm({ showFeedbackForm, setShowFeedbackForm }: 
       }, 3000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      setSubmitError('Failed to submit feedback. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setSubmitError(`Failed to submit feedback: ${errorMessage}. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }

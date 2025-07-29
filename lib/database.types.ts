@@ -33,6 +33,59 @@ export type Database = {
         }
         Relationships: []
       }
+      monastery_feedback: {
+        Row: {
+          id: string
+          monastery_id: string
+          user_name: string | null
+          user_email: string | null
+          feedback_type: string
+          subject: string
+          feedback_content: string
+          admin_status: 'pending' | 'cleared'
+          admin_notes: string | null
+          created_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+        }
+        Insert: {
+          id?: string
+          monastery_id: string
+          user_name?: string | null
+          user_email?: string | null
+          feedback_type: string
+          subject: string
+          feedback_content: string
+          admin_status?: 'pending' | 'cleared'
+          admin_notes?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Update: {
+          id?: string
+          monastery_id?: string
+          user_name?: string | null
+          user_email?: string | null
+          feedback_type?: string
+          subject?: string
+          feedback_content?: string
+          admin_status?: 'pending' | 'cleared'
+          admin_notes?: string | null
+          created_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monastery_feedback_monastery_id_fkey"
+            columns: ["monastery_id"]
+            isOneToOne: false
+            referencedRelation: "monasteries"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       monasteries: {
         Row: {
           address: string | null

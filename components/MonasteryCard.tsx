@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Database } from '../lib/database.types';
+import MonasteryFeedbackForm from './MonasteryFeedbackForm';
 import PhotoGallery from './PhotoGallery';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
@@ -27,6 +28,7 @@ const getDisplayAddress = (address: string | null): string | null => {
 
 export default function MonasteryCard({ monastery, onViewOnMap, admin = false, onEditMonastery, onDeleteMonastery }: MonasteryCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   
   const {
     name,
@@ -281,10 +283,24 @@ export default function MonasteryCard({ monastery, onViewOnMap, admin = false, o
                   Call
                 </a>
               )}
+              
+              <button
+                onClick={() => setShowFeedbackForm(true)}
+                className="inline-flex items-center px-2 py-1 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Give Feedback on This Center
+              </button>
             </>
           ) : null}
         </div>
       </div>
+      
+      {/* Monastery Feedback Form */}
+      <MonasteryFeedbackForm 
+        monastery={monastery}
+        showForm={showFeedbackForm}
+        setShowForm={setShowFeedbackForm}
+      />
     </div>
   );
 } 

@@ -98,3 +98,65 @@ export const getFeedback = async () => {
 
   return data;
 }
+
+// Monastery feedback functions
+type MonasteryFeedbackData = Database['public']['Tables']['monastery_feedback']['Insert']
+
+export const submitMonasteryFeedback = async (feedbackData: MonasteryFeedbackData) => {
+  const { error } = await supabase
+    .from('monastery_feedback')
+    .insert([feedbackData]);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export const getMonasteryFeedback = async () => {
+  const { data, error } = await supabase
+    .from('monastery_feedback')
+    .select(`
+      *,
+      monasteries (
+        name,
+        address
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export const updateMonasteryFeedbackNotes = async (
+  id: string, 
+  adminNotes: string
+) => {
+  const { error } = await supabase
+    .from('monastery_feedback')
+    .update({ 
+      admin_notes: adminNotes
+    })
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export const clearMonasteryFeedback = async (id: string) => {
+  const { error } = await supabase
+    .from('monastery_feedback')
+    .update({ 
+      admin_status: 'cleared',
+      reviewed_at: new Date().toISOString()
+    })
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+}

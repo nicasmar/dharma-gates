@@ -2,17 +2,24 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { Database } from '../lib/database.types';
-import { getMonasteries, updateMonasteryPendingStatus, deleteMonastery } from '@/lib/supabase';
+import { getMonasteries, updateMonasteryPendingStatus, deleteMonastery, getMonasteryFeedback } from '@/lib/supabase';
 import MonasteryCard from './MonasteryCard';
 import EditCenterForm from './EditCenterForm';
 import MonasteryTable from "./MonasteryTable";
 import MapWrapper from './MapWrapper';
 import FilterPanel from "./FilterPanel";
 import FeedbackPanel from './FeedbackPanel';
+import MonasteryFeedbackCard from './MonasteryFeedbackCard';
 import { useFilterOptions } from '../hooks/useFilterOptions';
 
 type Monastery = Database['public']['Tables']['monasteries']['Row'];
 type MonasteryWithTimestamp = Monastery & { lastUpdated?: number };
+type MonasteryFeedback = Database['public']['Tables']['monastery_feedback']['Row'] & {
+  monasteries?: {
+    name: string;
+    address: string | null;
+  };
+};
 
 
 
@@ -20,6 +27,7 @@ export default function AdminPanel() {
   const [monasteries, setMonasteries] = useState<MonasteryWithTimestamp[]>([]);
   const [approvedMonasteries, setApprovedMonasteries] = useState<MonasteryWithTimestamp[]>([]);
   const [filteredApprovedMonasteries, setFilteredApprovedMonasteries] = useState<MonasteryWithTimestamp[]>([]);
+  const [monasteryFeedback, setMonasteryFeedback] = useState<MonasteryFeedback[]>([]);
   const [totalCenters, setTotalCenters] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,17 +43,25 @@ export default function AdminPanel() {
     async function fetchData() {
       try {
         setLoading(true);
-        const data = await getMonasteries();
-        setTotalCenters(data.length);
+        const [monasteriesData, feedbackData] = await Promise.all([
+          getMonasteries(),
+          getMonasteryFeedback()
+        ]);
         
-        const pendingData = data.filter(m => m.pending);
-        const approvedData = data.filter(m => !m.pending);
+        setTotalCenters(monasteriesData.length);
+        
+        const pendingData = monasteriesData.filter(m => m.pending);
+        const approvedData = monasteriesData.filter(m => !m.pending);
         
         setMonasteries(pendingData);
         setApprovedMonasteries(approvedData);
         setFilteredApprovedMonasteries(approvedData);
+        
+        // Filter to show only pending feedback
+        const pendingFeedback = feedbackData.filter(f => f.admin_status === 'pending');
+        setMonasteryFeedback(pendingFeedback);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching monasteries');
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
       } finally {
         setLoading(false);
       }
@@ -156,6 +172,17 @@ export default function AdminPanel() {
     setDeleteConfirmMonastery(null);
   };
 
+  const handleFeedbackStatusUpdate = async () => {
+    // Refresh feedback data after status update
+    try {
+      const feedbackData = await getMonasteryFeedback();
+      const pendingFeedback = feedbackData.filter(f => f.admin_status === 'pending');
+      setMonasteryFeedback(pendingFeedback);
+    } catch (err) {
+      console.error('Error refreshing feedback data:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -169,7 +196,10 @@ export default function AdminPanel() {
             </div>
             <div className="bg-gray-50 rounded-lg p-6 flex flex-col justify-between h-full">
               <h3 className="text-lg font-medium text-gray-900">Pending Reviews</h3>
-              <p className="text-4xl font-bold text-[#286B88] mt-2">{monasteries.length}</p>
+              <p className="text-4xl font-bold text-[#286B88] mt-2">{monasteries.length + monasteryFeedback.length}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {monasteries.length} new centers, {monasteryFeedback.length} feedback
+              </p>
             </div>
           </div>
 
@@ -187,44 +217,78 @@ export default function AdminPanel() {
                 <p className="text-rose-700 text-lg font-medium mb-4">Error loading monasteries</p>
                 <p className="text-rose-600">{error}</p>
               </div>
-            ) : monasteries.length === 0 ? (
+            ) : monasteries.length === 0 && monasteryFeedback.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">No pending centers to review</p>
+                <p className="text-gray-500">No pending centers or feedback to review</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {monasteries.map((monastery) => (
-                  <div key={monastery.id} className="flex gap-4">
-                    <div className="flex-1">
-                      <MonasteryCard 
-                        key={`${monastery.id}-${monastery.lastUpdated || 'initial'}`}
-                        monastery={monastery} 
-                        onViewOnMap={handleViewOnMapPending}
-                        admin={true}
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center gap-2">
-                      <button 
-                        onClick={() => handleEdit(monastery)}
-                        className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleAccept(monastery)}
-                        className="px-4 py-2 text-sm bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90"
-                      >
-                        Accept
-                      </button>
-                      <button 
-                        onClick={() => handleReject(monastery)}
-                        className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700"
-                      >
-                        Reject
-                      </button>
+              <div className="space-y-8">
+                {/* Pending Monastery Feedback */}
+                {monasteryFeedback.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <span>👤 User Feedback on Centers</span>
+                      <span className="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">
+                        {monasteryFeedback.length} pending
+                      </span>
+                    </h3>
+                    <div className="space-y-4">
+                      {monasteryFeedback.map((feedback) => (
+                        <MonasteryFeedbackCard
+                          key={feedback.id}
+                          feedback={feedback}
+                          onStatusUpdate={handleFeedbackStatusUpdate}
+                        />
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* Pending New Centers */}
+                {monasteries.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <span>🏛️ New Center Submissions</span>
+                      <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
+                        {monasteries.length} pending
+                      </span>
+                    </h3>
+                    <div className="space-y-6">
+                      {monasteries.map((monastery) => (
+                        <div key={monastery.id} className="flex gap-4">
+                          <div className="flex-1">
+                            <MonasteryCard 
+                              key={`${monastery.id}-${monastery.lastUpdated || 'initial'}`}
+                              monastery={monastery} 
+                              onViewOnMap={handleViewOnMapPending}
+                              admin={true}
+                            />
+                          </div>
+                          <div className="flex flex-col justify-center gap-2">
+                            <button 
+                              onClick={() => handleEdit(monastery)}
+                              className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleAccept(monastery)}
+                              className="px-4 py-2 text-sm bg-[#286B88] text-white rounded-lg hover:bg-[#286B88]/90"
+                            >
+                              Accept
+                            </button>
+                            <button 
+                              onClick={() => handleReject(monastery)}
+                              className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
