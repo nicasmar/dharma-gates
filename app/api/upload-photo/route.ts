@@ -1,23 +1,9 @@
+import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Upload API called');
-    
-    // Check environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing environment variables:', {
-        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-      });
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File;

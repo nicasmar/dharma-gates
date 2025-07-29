@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('URL upload API called');
-    
-    // Check environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing environment variables');
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
+
 
     const { imageUrl } = await request.json();
     
