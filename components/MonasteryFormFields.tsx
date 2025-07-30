@@ -83,6 +83,22 @@ export default function MonasteryFormFields({
   const [customDiet, setCustomDiet] = useState('');
   const [showTraditionsDropdown, setShowTraditionsDropdown] = useState(false);
   const traditionsDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Store raw input values for array fields to allow proper typing with spaces
+  const [rawInputValues, setRawInputValues] = useState({
+    languages_spoken: formData.languages_spoken?.join(', ') || '',
+    practices: formData.practices?.join(', ') || '',
+    teachers: formData.teachers?.join(', ') || ''
+  });
+
+  // Update raw input values when formData changes (e.g., when editing existing monastery)
+  useEffect(() => {
+    setRawInputValues({
+      languages_spoken: formData.languages_spoken?.join(', ') || '',
+      practices: formData.practices?.join(', ') || '',
+      teachers: formData.teachers?.join(', ') || ''
+    });
+  }, [formData.languages_spoken, formData.practices, formData.teachers]);
 
   // Close traditions dropdown when clicking outside
   useEffect(() => {
@@ -224,7 +240,7 @@ export default function MonasteryFormFields({
     if (type === 'checkbox') {
       onFormDataChange({ ...formData, [name]: (e.target as HTMLInputElement).checked });
     } else if (name === 'languages_spoken' || name === 'practices' || name === 'teachers') {
-      onFormDataChange({ ...formData, [name]: value ? value.split(',').map(item => item.trim()) : null });
+      handleArrayFieldChange(name as 'languages_spoken' | 'practices' | 'teachers', value);
     } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy' || name === 'dietary_info') {
       handleSelectChange(name, value);
       return;
@@ -256,6 +272,21 @@ export default function MonasteryFormFields({
     if (errors.traditions) {
       onErrorsChange({ ...errors, traditions: undefined });
     }
+  };
+
+  const handleArrayFieldChange = (fieldName: 'languages_spoken' | 'practices' | 'teachers', value: string) => {
+    setRawInputValues(prev => ({ ...prev, [fieldName]: value }));
+    
+    // Clear error when field is modified
+    if (errors[fieldName]) {
+      onErrorsChange({ ...errors, [fieldName]: undefined });
+    }
+  };
+
+  const handleArrayFieldBlur = (fieldName: 'languages_spoken' | 'practices' | 'teachers') => {
+    const rawValue = rawInputValues[fieldName];
+    const processedArray = rawValue ? rawValue.split(',').map(item => item.trim()).filter(item => item) : null;
+    onFormDataChange({ ...formData, [fieldName]: processedArray });
   };
 
   const getFieldSize = showLocationInput ? 'text-sm' : 'text-base';
@@ -509,8 +540,9 @@ export default function MonasteryFormFields({
               <input
                 type="text"
                 name="languages_spoken"
-                value={formData.languages_spoken?.join(', ') || ''}
+                value={rawInputValues.languages_spoken}
                 onChange={handleChange}
+                onBlur={() => handleArrayFieldBlur('languages_spoken')}
                 className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
                 placeholder="English, Spanish, French"
               />
@@ -521,8 +553,9 @@ export default function MonasteryFormFields({
               <input
                 type="text"
                 name="practices"
-                value={formData.practices?.join(', ') || ''}
+                value={rawInputValues.practices}
                 onChange={handleChange}
+                onBlur={() => handleArrayFieldBlur('practices')}
                 className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
                 placeholder="Meditation, Yoga, Dharma talks"
               />
@@ -532,8 +565,9 @@ export default function MonasteryFormFields({
               <input
                 type="text"
                 name="teachers"
-                value={formData.teachers?.join(', ') || ''}
+                value={rawInputValues.teachers}
                 onChange={handleChange}
+                onBlur={() => handleArrayFieldBlur('teachers')}
                 className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
                 placeholder="Teacher names"
               />
