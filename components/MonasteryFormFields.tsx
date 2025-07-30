@@ -239,6 +239,13 @@ export default function MonasteryFormFields({
     
     if (type === 'checkbox') {
       onFormDataChange({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+    } else if (name === 'beginner_friendly' || name === 'ordination_possible') {
+      // Handle Yes/No/Not specified dropdowns
+      let booleanValue: boolean | null = null;
+      if (value === 'yes') booleanValue = true;
+      else if (value === 'no') booleanValue = false;
+      // 'not_specified' remains null
+      onFormDataChange({ ...formData, [name]: booleanValue });
     } else if (name === 'languages_spoken' || name === 'practices' || name === 'teachers') {
       handleArrayFieldChange(name as 'languages_spoken' | 'practices' | 'teachers', value);
     } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy' || name === 'dietary_info') {
@@ -698,26 +705,32 @@ export default function MonasteryFormFields({
             </div>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={`block ${getFieldSize} font-medium text-[#286B88]/80 mb-2`}>Beginner Friendly</label>
+              <select
                 name="beginner_friendly"
-                checked={formData.beginner_friendly || false}
+                value={formData.beginner_friendly === true ? 'yes' : formData.beginner_friendly === false ? 'no' : 'not_specified'}
                 onChange={handleChange}
-                className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-[#286B88]/20 rounded"
-              />
-              <label className={`ml-2 block ${getFieldSize} text-[#286B88]/80`}>Beginner Friendly</label>
+                className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] bg-white text-gray-900`}
+              >
+                <option value="not_specified">Not specified</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
             </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
+            <div>
+              <label className={`block ${getFieldSize} font-medium text-[#286B88]/80 mb-2`}>Ordination Possible</label>
+              <select
                 name="ordination_possible"
-                checked={formData.ordination_possible || false}
+                value={formData.ordination_possible === true ? 'yes' : formData.ordination_possible === false ? 'no' : 'not_specified'}
                 onChange={handleChange}
-                className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-[#286B88]/20 rounded"
-              />
-              <label className={`ml-2 block ${getFieldSize} text-[#286B88]/80`}>Ordination Possible</label>
+                className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] bg-white text-gray-900`}
+              >
+                <option value="not_specified">Not specified</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
             </div>
           </div>
         </div>

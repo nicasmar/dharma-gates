@@ -36,7 +36,7 @@ export default function SuggestCenterForm({
     address: '',
     email: '',
     phone: '',
-    beginner_friendly: false,
+    beginner_friendly: null,
     community_size: '',
     dietary_info: '',
     gender_policy: '',
@@ -49,7 +49,7 @@ export default function SuggestCenterForm({
     setting: '',
     teachers: [],
     traditions: [],
-    ordination_possible: false,
+    ordination_possible: null,
     latitude: null,
     longitude: null,
     photos: []
