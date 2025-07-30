@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PhotoUpload from './PhotoUpload';
 
 interface FormData {
@@ -81,6 +81,22 @@ export default function MonasteryFormFields({
   const [customGenderPolicy, setCustomGenderPolicy] = useState('');
   const [customTradition, setCustomTradition] = useState('');
   const [customDiet, setCustomDiet] = useState('');
+  const [showTraditionsDropdown, setShowTraditionsDropdown] = useState(false);
+  const traditionsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close traditions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (traditionsDropdownRef.current && !traditionsDropdownRef.current.contains(event.target as Node)) {
+        setShowTraditionsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSelectChange = (fieldName: string, value: string) => {
     // Handle "Other" option selections
@@ -106,10 +122,7 @@ export default function MonasteryFormFields({
           setShowCustomGenderPolicy(true);
           onFormDataChange({ ...formData, gender_policy: '' });
           break;
-        case 'traditions':
-          setShowCustomTradition(true);
-          onFormDataChange({ ...formData, traditions: [] });
-          break;
+
         case 'dietary_info':
           setShowCustomDiet(true);
           onFormDataChange({ ...formData, dietary_info: '' });
@@ -117,12 +130,7 @@ export default function MonasteryFormFields({
       }
     } else {
       // Handle regular selections
-      if (fieldName === 'traditions') {
-        // Traditions is an array field, so we need to convert the single selection to an array
-        onFormDataChange({ ...formData, [fieldName]: value ? [value] : null });
-      } else {
-        onFormDataChange({ ...formData, [fieldName]: value || null });
-      }
+      onFormDataChange({ ...formData, [fieldName]: value || null });
       // Hide custom input if switching away from "Other"
       switch (fieldName) {
         case 'center_type':
@@ -145,10 +153,7 @@ export default function MonasteryFormFields({
           setShowCustomGenderPolicy(false);
           setCustomGenderPolicy('');
           break;
-        case 'traditions':
-          setShowCustomTradition(false);
-          setCustomTradition('');
-          break;
+
         case 'dietary_info':
           setShowCustomDiet(false);
           setCustomDiet('');
@@ -184,10 +189,7 @@ export default function MonasteryFormFields({
         setCustomGenderPolicy(value);
         onFormDataChange({ ...formData, gender_policy: value });
         break;
-      case 'traditions':
-        setCustomTradition(value);
-        onFormDataChange({ ...formData, traditions: value ? value.split(',').map(item => item.trim()) : null });
-        break;
+
       case 'dietary_info':
         setCustomDiet(value);
         onFormDataChange({ ...formData, dietary_info: value });
@@ -200,6 +202,22 @@ export default function MonasteryFormFields({
     }
   };
 
+  const handleCustomTraditionChange = (value: string) => {
+    setCustomTradition(value);
+    // Parse comma-separated custom traditions and add them to the existing selections
+    const customTraditions = value ? value.split(',').map(item => item.trim()).filter(item => item) : [];
+    const currentTraditions = formData.traditions || [];
+    const existingNonCustom = currentTraditions.filter(t => availableTraditions.includes(t));
+    const allTraditions = [...existingNonCustom, ...customTraditions];
+    
+    onFormDataChange({ ...formData, traditions: allTraditions.length > 0 ? allTraditions : null });
+    
+    // Clear error when field is modified
+    if (errors.traditions) {
+      onErrorsChange({ ...errors, traditions: undefined });
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
@@ -207,7 +225,7 @@ export default function MonasteryFormFields({
       onFormDataChange({ ...formData, [name]: (e.target as HTMLInputElement).checked });
     } else if (name === 'languages_spoken' || name === 'practices' || name === 'teachers') {
       onFormDataChange({ ...formData, [name]: value ? value.split(',').map(item => item.trim()) : null });
-    } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy' || name === 'traditions' || name === 'dietary_info') {
+    } else if (name === 'center_type' || name === 'vehicle' || name === 'setting' || name === 'price_model' || name === 'gender_policy' || name === 'dietary_info') {
       handleSelectChange(name, value);
       return;
     } else {
@@ -217,6 +235,26 @@ export default function MonasteryFormFields({
     // Clear error when field is modified
     if (errors[name as keyof FormData]) {
       onErrorsChange({ ...errors, [name]: undefined });
+    }
+  };
+
+  const handleTraditionSelect = (tradition: string) => {
+    const currentTraditions = formData.traditions || [];
+    let updatedTraditions;
+    
+    if (currentTraditions.includes(tradition)) {
+      // Remove tradition if already selected
+      updatedTraditions = currentTraditions.filter(t => t !== tradition);
+    } else {
+      // Add tradition if not selected
+      updatedTraditions = [...currentTraditions, tradition];
+    }
+    
+    onFormDataChange({ ...formData, traditions: updatedTraditions.length > 0 ? updatedTraditions : null });
+    
+    // Clear error when field is modified
+    if (errors.traditions) {
+      onErrorsChange({ ...errors, traditions: undefined });
     }
   };
 
@@ -502,25 +540,52 @@ export default function MonasteryFormFields({
             </div>
             <div>
               <label className={`block ${getFieldSize} font-medium text-[#286B88]/80 mb-2`}>Traditions</label>
-              <select
-                name="traditions"
-                value={showCustomTradition ? 'Other' : (formData.traditions?.join(', ') || '')}
-                onChange={handleChange}
-                className={`w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
-              >
-                <option value="">Select traditions</option>
-                {availableTraditions.map(tradition => (
-                  <option key={tradition} value={tradition}>{tradition}</option>
-                ))}
-                <option value="Other">Other (specify below)</option>
-              </select>
+              <div className="relative" ref={traditionsDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowTraditionsDropdown(!showTraditionsDropdown)}
+                  className={`w-full ${getFieldPadding} ${getFieldSize} text-left border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88] bg-white text-gray-900`}
+                >
+                  {formData.traditions && formData.traditions.length > 0 
+                    ? formData.traditions.join(', ')
+                    : 'Select traditions'}
+                </button>
+                {showTraditionsDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                    <div className="p-2 space-y-2 max-h-60 overflow-y-auto">
+                      {availableTraditions.map(tradition => (
+                        <label key={tradition} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.traditions?.includes(tradition) || false}
+                            onChange={() => handleTraditionSelect(tradition)}
+                            className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                          />
+                          <span className={`${getFieldSize} text-gray-900`}>{tradition}</span>
+                        </label>
+                      ))}
+                      <div className="border-t border-gray-200 pt-2">
+                        <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                          <input
+                            type="checkbox"
+                            checked={showCustomTradition}
+                            onChange={() => setShowCustomTradition(!showCustomTradition)}
+                            className="h-4 w-4 text-[#286B88] focus:ring-[#286B88] border-gray-300 rounded"
+                          />
+                          <span className={`${getFieldSize} text-gray-900`}>Other (specify below)</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               {showCustomTradition && (
                 <input
                   type="text"
                   value={customTradition}
-                  onChange={(e) => handleCustomInputChange('traditions', e.target.value)}
+                  onChange={(e) => handleCustomTraditionChange(e.target.value)}
                   className={`mt-2 w-full ${getFieldPadding} ${getFieldSize} border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]`}
-                  placeholder="Enter custom traditions"
+                  placeholder="Enter custom traditions (comma-separated)"
                 />
               )}
             </div>

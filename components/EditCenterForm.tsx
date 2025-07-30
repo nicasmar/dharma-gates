@@ -14,6 +14,7 @@ interface EditCenterFormProps {
   availableSettings: string[];
   availablePriceModels: string[];
   availableGenderPolicies: string[];
+  availableTraditions: string[];
   availableDiets: string[];
 }
 
@@ -26,6 +27,7 @@ export default function EditCenterForm({
   availableSettings, 
   availablePriceModels, 
   availableGenderPolicies,
+  availableTraditions,
   availableDiets 
 }: EditCenterFormProps) {
   const [formData, setFormData] = useState<FormData>({
@@ -154,7 +156,7 @@ export default function EditCenterForm({
               availableSettings={availableSettings}
               availablePriceModels={availablePriceModels}
               availableGenderPolicies={availableGenderPolicies}
-              availableTraditions={[]} // Edit form doesn't need traditions dropdown
+              availableTraditions={availableTraditions}
               availableDiets={availableDiets}
               showLocationInput={false}
               isSubmitting={isSubmitting}
