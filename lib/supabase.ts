@@ -99,6 +99,32 @@ export const getFeedback = async () => {
   return data;
 }
 
+export const starFeedback = async (id: string, starred: boolean) => {
+  const { error } = await supabase
+    .from('feedback')
+    .update({ starred })
+    .eq('id', id);
+
+  if (error) {
+    // Check if the error is due to missing column
+    if (error.message.includes('starred') || error.code === '42703') {
+      throw new Error('Star feature requires database migration. Please run the migration to enable starring.');
+    }
+    throw error;
+  }
+}
+
+export const deleteFeedback = async (id: string) => {
+  const { error } = await supabase
+    .from('feedback')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+}
+
 // Monastery feedback functions
 type MonasteryFeedbackData = Database['public']['Tables']['monastery_feedback']['Insert']
 

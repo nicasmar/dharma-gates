@@ -198,12 +198,10 @@ export default function AdminPanel() {
               <h3 className="text-lg font-medium text-gray-900">Pending Reviews</h3>
               <p className="text-4xl font-bold text-[#286B88] mt-2">{monasteries.length + monasteryFeedback.length}</p>
               <p className="text-sm text-gray-600 mt-1">
-                {monasteries.length} new centers, {monasteryFeedback.length} feedback
+                {monasteries.length} suggested centers, {monasteryFeedback.length} feedback on centers
               </p>
             </div>
           </div>
-
-          <FeedbackPanel />
 
           <div className="border-t border-gray-200 pt-6 mt-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Pending Center Reviews</h2>
@@ -244,11 +242,11 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* Pending New Centers */}
+                {/* Pending Suggested Centers */}
                 {monasteries.length > 0 && (
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                      <span>🏛️ New Center Submissions</span>
+                      <span>🏛️ Suggested Center Submissions</span>
                       <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
                         {monasteries.length} pending
                       </span>
@@ -387,6 +385,10 @@ export default function AdminPanel() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 mt-6">
+            <FeedbackPanel />
           </div>
         </div>
       </div>
