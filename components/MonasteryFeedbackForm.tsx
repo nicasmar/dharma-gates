@@ -24,7 +24,7 @@ export default function MonasteryFeedbackForm({ monastery, showForm, setShowForm
   const [formData, setFormData] = useState<FeedbackFormData>({
     user_name: '',
     user_email: '',
-    feedback_type: 'general',
+    feedback_type: 'info_about_center',
     subject: '',
     feedback_content: ''
   });
@@ -76,7 +76,7 @@ export default function MonasteryFeedbackForm({ monastery, showForm, setShowForm
         setFormData({
           user_name: '',
           user_email: '',
-          feedback_type: 'general',
+          feedback_type: 'info_about_center',
           subject: '',
           feedback_content: ''
         });
@@ -179,9 +179,8 @@ export default function MonasteryFeedbackForm({ monastery, showForm, setShowForm
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 text-sm border border-[#286B88]/20 rounded-lg focus:ring-2 focus:ring-[#286B88] focus:border-[#286B88]"
               >
+                <option value="info_about_center">Info About this Center: Corrections, Updates, Additional Information</option>
                 <option value="general">General Feedback</option>
-                <option value="correction">Correction/Update</option>
-                <option value="addition">Additional Information</option>
               </select>
               <p className="mt-1 text-xs text-gray-500">
                 Choose the type that best describes your feedback
