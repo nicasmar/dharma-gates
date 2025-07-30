@@ -139,7 +139,7 @@ export default function FeedbackForm({ showFeedbackForm, setShowFeedbackForm }: 
             />
             {errors.email && <p className="mt-1 text-sm text-rose-600">{errors.email}</p>}
             <p className="mt-1 text-xs text-gray-500">
-              Optional - if you'd like us to follow up with you
+              Optional - if you&apos;d like us to follow up with you
             </p>
           </div>
 

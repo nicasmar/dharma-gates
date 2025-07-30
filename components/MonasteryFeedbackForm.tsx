@@ -219,7 +219,7 @@ export default function MonasteryFeedbackForm({ monastery, showForm, setShowForm
               />
               {errors.feedback_content && <p className="mt-1 text-sm text-rose-600">{errors.feedback_content}</p>}
               <p className="mt-1 text-xs text-gray-500">
-                Be specific about what you'd like to correct, add, or share about this center
+                Be specific about what you&apos;d like to correct, add, or share about this center
               </p>
             </div>
 
