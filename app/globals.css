@@ -85,3 +85,10 @@ input[type="checkbox"]:focus-visible {
 :focus-visible {
   outline-color: #286B88 !important;
 }
+
+.white-text {
+  color: #e8e8e8;
+  font-size: 18px;
+  /* font-weight: 600; */
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
